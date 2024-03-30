@@ -1,0 +1,5265 @@
+#include "cpu.h"
+#include "INIT_MINI.h"
+#include "Mini51Series.h"
+#include "system_Mini51Series.h"
+#include "REFRENCE_MINI.h"
+#include "pwm.h"
+#include "fmc.h"
+#include "IspFlash.h"
+#include "struct_def.h"
+#include "AT24C04.h"
+uint32_t  Delay = 0x000FFFFF;
+unsigned  char Input1,InputCh1,ChInputAct1;
+unsigned  char Input2,InputCh2,ChInputAct2;
+unsigned  char Input3,InputCh3,ChInputAct3;
+unsigned  char Input4,InputCh4,ChInputAct4;
+unsigned  char Input5,InputCh5,ChInputAct5;
+unsigned  char Input6,InputCh6,ChInputAct6;
+unsigned  char Input7,InputCh7,ChInputAct7;
+unsigned  char Input8,InputCh8,ChInputAct8;
+unsigned  char Input9,InputCh9,ChInputAct9;
+#define HIGH		1
+#define LOW			0
+void segmrnt(void);
+void SendByte_74HC595(unsigned char byte);
+unsigned char jflgStart;
+unsigned char SetFlag1;
+unsigned char ResetFlag;
+unsigned char SetFlag11;
+unsigned char CompFlag3=1;
+unsigned char WriteValue=1;
+unsigned char StartToggle;
+unsigned char SetFlag12;
+unsigned char FlagT=1;
+unsigned char FlagU=1;
+unsigned char SetFlag13;
+unsigned char FlagC2;
+unsigned char SetFlag31;
+unsigned char SetFlag32;
+unsigned char CompFlag;
+unsigned char PowFlag;
+unsigned char Togg=1;
+unsigned char CompFlag1;
+unsigned char CompFlag4;
+unsigned char SetFlag2;
+unsigned char SetFlag21;
+unsigned char SetFlag22;
+unsigned char FlagShowU;
+unsigned char SetFlag3;
+unsigned char flagtoset;
+unsigned char FlagToStartO;
+unsigned char FlagToStartC;
+unsigned char Flag7;
+unsigned char TimerFlag;
+unsigned char FlagForU;
+unsigned char FlagForD;
+unsigned char FlagToStop;
+unsigned char LowToggle;
+unsigned char FlagForOpen;
+unsigned char FlagForCurrent2;
+unsigned char FlagForOpen1;
+unsigned char Led2;
+unsigned char FlagHalfO;
+unsigned char FlagHalfC;
+unsigned char FlagForCount2;
+unsigned char FlagForCurrent;
+unsigned char FlagForCurrent1;
+unsigned char FlagForCalculation=1;
+unsigned char TempU;
+unsigned char Flag0;
+unsigned char TempD;
+unsigned char Flag1=0;
+unsigned char Flag11;
+unsigned char Flag2;
+unsigned char Led10;
+unsigned char flagReal;
+unsigned char Led20;
+unsigned char Led1;
+unsigned char TimerNew;
+unsigned char Led4;
+unsigned char SetButton;
+unsigned char Led8;
+unsigned char OffLed;
+unsigned char FlagD=0;
+unsigned char Flag22;
+unsigned char FlagForCount;
+unsigned char Flag3;
+unsigned char OpenFlag;
+unsigned char Flag0;
+unsigned char Toggle_Flag;
+unsigned char CalMenu;
+unsigned char MainMenu;
+void delay(unsigned long dly);
+void keyRead1 (void);
+void keyRead2 (void);
+void keyRead3 (void);
+void keyRead4 (void);
+void keyRead5 (void);
+void keyRead6 (void);
+void keyRead7 (void);
+void keyRead8 (void);
+void keyRead9 (void);
+void Action (void);
+void Printing (void);
+void toggle (void);
+void TimerTemp (void);
+void Short (void);
+void Calculation (void);
+void MainDisplay (void);
+void DisplayCalU (void);
+void DisplayCalD (void);
+void Genreate_PWM(void);
+void stable_mode(void);
+void Change_mode(void);
+void ShowVersion (void);
+void DataFlash_Write_NotErase (unsigned char * Data, ulint Address , uint NoOfDword );
+void DataFlash_Read (unsigned char  * Data, ulint  Address , uint NoOfDword );
+void DataFlash_Erase (uchar PageNo);
+int set_data_flash_base(uint32_t u32DFBA);
+int data;
+int increment = 1;
+void Display(void);
+unsigned char disflag,disupdate5ms=0; 
+uint8_t dno;
+void Read_Adc(void);
+unsigned short AdcReading;
+unsigned long AccumulateCo;
+unsigned short SampleCo;
+unsigned short ReadingAvg;
+uint16_t count1=0;
+uint16_t CurrentCount;
+uint16_t Count1Temp;
+uint16_t count2=0;
+uint16_t Minuscount;
+uint16_t NewCount3;
+uint16_t Newcount2;
+uint16_t count3=0;
+uint16_t SetTim=0;
+uint16_t SetTim2;
+uint16_t Setcount=0;
+uint16_t NewCountU;
+uint16_t NewCountD;
+uint16_t MinCount;
+uint16_t CountForD=0;
+uint16_t MaxCount;
+
+unsigned short CurrentTemp;
+unsigned short CurrentTempU;
+unsigned short CurrentTempD;
+unsigned short MinTemp;
+unsigned short MaxTemp;
+unsigned short NewMaxTemp;
+unsigned short NewMinTemp;
+uint32_t NewCount;
+uint32_t originalCount;
+uint32_t NewCount1;
+uint32_t NewCount2;
+uint32_t NewTimcount;
+uint32_t NewAllcount;
+uint32_t New_Count1;
+uint32_t New_Count2;
+uint32_t New_Count11;
+uint32_t New_Count22;
+uint16_t CountforU=0;
+uint16_t CountforD=0;
+
+uint16_t LED;
+uint16_t LED1;
+uint16_t count=0;
+uint16_t old_count1;
+uint16_t Setold_count;
+uint16_t old_count2;
+uint16_t old_count3;
+uint16_t old_count4;
+uint16_t old_count5;
+unsigned short ChModeTimer;
+unsigned short timer,fivesecond,FlickerTime,timer_10s;
+unsigned char toggleflg;
+unsigned char Countflick=0,Flickflg,mode;
+unsigned char flag1;
+unsigned char flag2; 
+unsigned char flag3; 
+unsigned char flag4;
+unsigned char FlagForC;
+unsigned char flag5;
+unsigned char StopToggle1;
+unsigned char StopToggle2;
+unsigned char FlagForToggleDis1;
+unsigned char FlagForToggleDis2;
+unsigned char FlagForToggleDis11;
+unsigned char FlagForToggleDis22;
+unsigned char FlagForTemp;
+unsigned char FlagSet;
+unsigned char FlagSepToShowTemp;
+unsigned char FlagFortimer;
+unsigned char FlagKey1;
+unsigned char FlagKey2;
+unsigned int Count,Count_lower;
+int byte;
+typedef struct {
+uint8_t Count;  
+uint8_t Count_lower;
+uint8_t inc_decimal;
+uint8_t pluse;    
+}seg_value;
+
+seg_value Segment={0};
+void displaydigit(int digit);
+uint8_t oldCount;
+unsigned short Timeref_1s = 0;
+unsigned short Timeref_2s = 0;
+unsigned short Timeref_3s = 0;
+unsigned short Timeref_4s = 0;
+unsigned long TotalCount = 0;
+unsigned long Timeref_6s = 0;
+unsigned long Timeref_7s = 0;
+unsigned long Timeref_8s = 0;
+unsigned long Timeref_9s = 0;
+unsigned long NotPress = 0;
+unsigned long Temptimer = 0;
+unsigned long VersionTim = 0;
+unsigned long ToggleTemp = 0;
+unsigned long CloTimer = 0;
+unsigned long ResetTimer = 0;
+unsigned long DelayToggle = 0;
+unsigned long DelayToggle1 = 0;
+unsigned long TimeFC = 0;
+unsigned long LED2 = 0;
+unsigned long DelayToPrinttemp = 0;
+unsigned long DelayToPrintOpen = 0;
+unsigned char seg[10]={0x3F,0x06,0x5B,0x04F,0x66,0x6D,0x7d,0x07,0x7f,0x6F};
+unsigned char alpha[3]={0x3F,0x73,0x54};
+unsigned char dno1;
+unsigned char SetTi;
+unsigned char dno2;
+unsigned char TimerS;
+unsigned char MainS;
+unsigned char CalS;
+unsigned char CalU;
+unsigned char CalU1;
+unsigned char CalD;
+unsigned char CalD1;
+unsigned char Open;
+unsigned char ShowTemp;
+unsigned char Count2;
+unsigned char Vers;
+unsigned char Current;
+unsigned char CurrentU;
+unsigned char CurrentD;
+unsigned char Current2;
+unsigned char Current3;
+
+unsigned char ToggleU;
+unsigned char ToggleD;
+unsigned long DisplayToggleU = 0;
+unsigned long DisplayToggleD = 0;
+unsigned long TimerCalU = 0;
+unsigned long TimerCalD = 0;
+unsigned long LEDcount = 0;
+unsigned long LEDcount1 = 0;
+unsigned long LEDcount2 = 0;
+unsigned long CountForLed = 0;
+unsigned long RelayDelay = 0;
+unsigned long LEDC = 0;
+unsigned long ClockForTime = 0;
+unsigned long BlinkForU = 0;
+unsigned long BlinkFor = 0;
+unsigned long Key5Set = 0;
+unsigned long Blink = 0;
+unsigned long DelayTO = 0;
+unsigned long BlinkForD = 0;
+unsigned long TimerForP1 = 0;
+unsigned long ForOff = 0;
+unsigned long TimerForP3 = 0;
+unsigned long TimerForP2 = 0;
+unsigned char Toggle;
+unsigned char P;
+typedef enum MenuIdx
+{
+	Set_temp,
+  Set_time,
+	Display_temp,
+	Display_time,
+	Start_timer,
+	
+}CalMode;
+
+typedef enum MainMode_Menu
+{
+	
+	Open_Case,
+  Current_Case,
+  Open_Current,
+	FlagShow_U,
+	Reset_TimerU,
+	Reset_TimerD,
+	Toggle_caseUO,
+	Toggle_caseDO,
+	Toggle_caseUC,
+	Toggle_caseDC,
+	Toggle_LEDinC,
+	Toggle_LEDinO,
+	
+}MainMenu1;
+
+
+int main (void)
+{	
+//	OUT = 0;
+do{;}while(Delay--);	
+//	OUT = 0;U
+InitializeOCP();
+EE_WP=0;
+//RELAY1 = OFF;
+//TimerFlag=1;
+//CurrentTempU=(600*(ReadingAvg-127))/1044;		
+if(P24  == 0)
+{
+	Flag1 = 1;
+	TimerS = 0;
+}
+else
+{
+	Flag1 =0;
+	TimerS = 3;
+//	Flag3=1;
+//  Toggle_Flag=1;
+//  FlagForC=0;
+}
+
+//EE_wrt( 0x90, (unsigned char*)&count2,sizeof(count2));
+//EE_wrt( 0x77, (unsigned char*)&Setcount,sizeof(Setcount));
+EE_rd( 0x77,(unsigned char*)&Setcount,sizeof(Setcount));
+EE_rd( 0x99,(unsigned char*)&SetTim,sizeof(SetTim));
+Minuscount=SetTim;
+
+//EE_rd( 0x22,(unsigned char*)&count2,sizeof(count2));
+//EE_rd( 0x91,(unsigned char*)&Timeref_9s,sizeof(Timeref_9s));
+
+	while(1)
+		{
+		//count > 1000
+		if(Ti1msRefresh)
+			{
+		  //CALLED EVERY ONE MSEC
+				Ti1msRefresh =0;
+				Read_Adc();
+				//TimerS++;
+//				if(TimerS > 1)
+//				{
+//				  TimerS = 0;
+//				}
+				switch(TimerS)
+				{
+					case 0:
+                DisplayCalU();					
+						    break;
+					
+					case 1:
+						    DisplayCalD();
+					    	break;
+					
+					case 2:
+								MainDisplay();
+				      	break;	
+            
+          case 3:
+						    ShowVersion();
+                break;						
+  		  }
+			}
+		}
+}
+
+
+ 
+void MainDisplay (void)
+{
+    CurrentTemp=(600*(ReadingAvg-127))/1044;
+		switch(MainMenu)
+		 {
+	      case Open_Case	:
+					
+			    if(CurrentTemp > 0x2BC)
+		      {    
+						FlagForOpen=1; 
+					  FlagForCurrent=0;
+						FlagForToggleDis1=1;
+						FlagForToggleDis2=1;
+						FlagForToggleDis11=0;
+						FlagForToggleDis22=0;
+					
+					  if(FlagSepToShowTemp)
+						{
+						 FlagForOpen=0;
+						}
+                 if(CompFlag)	
+								 {
+									 	TimerNew=1;
+									 SetButton=1;
+									 CompFlag1=0;
+									 FlagToStop=0;
+									 NewAllcount=count2*60000;
+									
+									 if(CurrentTemp < Setcount)
+										{
+											RelayDelay++;
+											if(RelayDelay > 1000)
+											{
+											 RelayDelay=0;
+											 RELAY1 = ON;
+											 Led1 = 1;
+											}
+										}
+										else
+										{
+											RELAY1 = OFF;
+											Led1 = 0;
+										
+											Newcount2=Minuscount;
+										}
+											TotalCount++;
+									  if(TotalCount < NewAllcount)
+									  {
+                     Led8=0;
+										 Led4=0;
+										 CountForLed++;
+										 if(CountForLed < 500)
+										 {
+											 if(CountForLed < 250)
+											 {
+												 Led20=1;
+											 }
+											 else
+											 {
+												 Led20=0;
+											 }
+										 }
+										 else
+										 {
+											CountForLed=0;
+										 }
+
+									 }
+                   else
+									 {
+										 CompFlag=0;
+ 										  Led4=1;
+									    Led8=1;
+
+									 }										 
+								  }
+								 else if(TotalCount == 0 && PowFlag == 1)
+										{
+											SetButton=1;
+//                      TimerNew=0;									 
+									    CompFlag1=1;
+											TotalCount = 0;
+									    Led4=1;
+										  Led8=1;
+										  Led20=0;
+											RELAY1 = OFF;
+											Led1 = 0;											
+								    }
+
+					}
+					else if(CurrentTemp < 0x2BC)
+					{ 
+						
+					  FlagForOpen=0;
+					  FlagForCurrent=1;	
+					  FlagSepToShowTemp=0;
+						FlagForToggleDis11=1;
+						FlagForToggleDis22=1;
+            FlagForToggleDis1=0;
+						FlagForToggleDis2=0;
+
+						
+						  if(CompFlag)	     
+								 {
+									 SetButton=1;
+									 	TimerNew=1;
+									 CompFlag1=0;
+									 FlagToStop=0;
+									 NewAllcount=count2*60000;
+//*****************RELAY CHANGEOVER*************************									 
+									  if(CurrentTemp < Setcount)
+										{
+	                    RelayDelay++;
+											if(RelayDelay > 1000)
+											{
+												RelayDelay=0;
+												RELAY1 = ON;
+												Led1 = 1;
+											}
+										}
+										else
+										{
+											RELAY1 = OFF;
+											Led1 = 0;
+											
+											Newcount2=Minuscount;
+										}
+										
+//***************LED CHANGEOVER******************************		
+										
+									  TotalCount++;
+
+									  if(TotalCount < NewAllcount)
+									  {
+										 Led8=0;
+										 Led4=0;
+										 CountForLed++;
+										 if(CountForLed < 500)
+										 {
+										   if(CountForLed < 250)
+										   {
+										     Led20=1;
+										   }
+											 else
+											 {
+											   Led20=0;
+											 }
+										 }
+										 else
+										 {
+										   CountForLed=0;
+										 }
+
+									 }
+                   else
+									 {
+										 CompFlag=0;
+ 										  Led4=1;
+									    Led8=1;
+
+									 }										 
+								  }
+								 else if(TotalCount == 0 && PowFlag == 1)
+										{
+											SetButton=1;
+//                      TimerNew=0;									 
+									    CompFlag1=1;
+											TotalCount = 0;
+									    Led4=1;
+										  Led8=1;
+										  Led20=0;		
+											RELAY1 = OFF;
+											Led1 = 0;												
+								 }
+						
+					}
+		       break;		
+
+//**************************TOGGLE UPPER DISPLAY IN OPEN CASE***************************	
+         case Toggle_caseUO:					
+						if(FlagForToggleDis1)
+						{	
+							   Led2=1;
+								 FlagFortimer=0;
+								 FlagForOpen=0;
+					
+								 FlagForCurrent=0;
+							   DisplayToggleU++;
+							if(DisplayToggleU < 500)
+							{
+							  if(DisplayToggleU < 250)
+								{
+								  CurrentU++;
+									if(CurrentU > 10)
+									{ 
+									 CurrentU =0;
+									}
+									OD0=1;
+									OD1=1;
+									OD2=1;
+									switch(CurrentU)
+									{		
+								case 0:
+//										Current=1;
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=0;
+											delay(50);
+								      keyRead8();
+		//						    keyRead4();
+											break;
+										
+							  case 1:
+											SendByte_74HC595(0x00);
+//										NewCount=count2;
+											OD0=1;
+											OD1=0;
+											OD2=0;
+											delay(50);	
+                      keyRead2();	
+//                      keyRead7();								
+											break;
+										
+								case 2:
+											SendByte_74HC595(0x00);
+//									  NewCount2=count2;
+											OD0=0;
+											OD1=0;
+											OD2=0;
+											delay(50);
+//										  keyRead6();
+                     keyRead1();
+											break;
+										 
+							  case 3:
+									    SendByte_74HC595(seg[count2%10]);
+											OD0=1;
+											OD1=0;
+											OD2=1;
+											delay(50);
+
+											break;
+								
+					      case 4:
+											SendByte_74HC595(seg[(count2/10)%10]);
+											NewCount=count2;
+											OD0=0;
+											OD1=0;
+											OD2=1;
+											delay(50);	
+//									  keyRead5();		
+											break;
+							
+					      case 5:
+											SendByte_74HC595(seg[(count2/100)%10]);
+//											NewCount2=count2;
+											OD0=1;
+											OD1=1;
+											OD2=0;
+											delay(50);
+//						        keyRead3();
+											keyRead9();
+											break;  
+								
+								case 6:
+									    if(Led10)
+											{
+												SendByte_74HC595(0x10);
+												OD0=0;
+												OD1=1;
+												OD2=1;
+											}
+											if(Led10==0)
+											{
+												SendByte_74HC595(0x00);
+												OD0=0;
+												OD1=1;
+												OD2=1;									
+											}
+									    break;
+											
+										case 7:
+													if(Led20)
+													{
+													SendByte_74HC595(0x20);
+													OD0=0;
+													OD1=1;
+													OD2=1;
+													}
+													
+																									
+													break;
+													
+										case 8:
+													if(Led4)
+													{
+													SendByte_74HC595(0x04);
+													OD0=0;
+													OD1=1;
+													OD2=1;
+													}		
+													if(Led4==0)
+													{
+													SendByte_74HC595(0x00);
+													OD0=0;
+													OD1=1;
+													OD2=1;														
+													}
+											break;	
+													
+												case 9:
+															if(Led8)
+															{
+															SendByte_74HC595(0x08);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led8==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;	
+															
+															case 10:
+															if(Led2)
+															{
+															SendByte_74HC595(0x16);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led2==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;
+   															
+													
+									 } 
+								}
+								else
+								{
+								  Current2++;
+									if(Current2 > 10)
+									{
+									 Current2 =0;
+									}
+									OD0=1;
+									OD1=1;
+									OD2=1;
+									switch(Current2)
+									{		
+								 case 0:
+											SendByte_74HC595(seg[Setcount%10]);
+											OD0=0;
+											OD1=1;
+											OD2=0;
+											delay(50);
+//											keyRead4();
+										  keyRead8();
+											break;
+									 
+									case 1:
+											SendByte_74HC595(seg[(Setcount/10)%10]);
+											OD0=1;
+											OD1=0;
+											OD2=0;
+											delay(50);
+											keyRead2();
+//										  keyRead7();
+											break;
+									
+									case 2:
+											SendByte_74HC595(seg[(Setcount/100)%10]);
+											OD0=0;
+											OD1=0;
+											OD2=0;
+											delay(50);
+											keyRead1();
+//									    keyRead6();
+//										delay(1000);
+											break; 
+										 
+							  case 3:
+									    SendByte_74HC595(seg[count2%10]);
+											OD0=1;
+											OD1=0;
+											OD2=1;
+											delay(50);
+//						        keyRead4();
+											break;
+								
+					      case 4:
+											SendByte_74HC595(seg[(count2/10)%10]);
+//											NewCount=count2;
+											OD0=0;
+											OD1=0;
+											OD2=1;
+											delay(50);	
+//									  keyRead5();		
+											break;
+							
+					      case 5:
+											SendByte_74HC595(seg[(count2/100)%10]);
+//											NewCount2=count2;
+											OD0=1;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											keyRead9();
+//                     keyRead3();								
+											break;
+								
+								case 6:
+									    if(Led10)
+											{
+												SendByte_74HC595(0x10);
+												OD0=0;
+												OD1=1;
+												OD2=1;
+											}
+											if(Led10==0)
+											{
+												SendByte_74HC595(0x00);
+												OD0=0;
+												OD1=1;
+												OD2=1;									
+											}
+									    break;
+
+								case 7:
+											if(Led4)
+											{
+											SendByte_74HC595(0x04);
+											OD0=0;
+											OD1=1;
+											OD2=1;
+											}		
+											if(Led4==0)
+											{
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=1;														
+											}
+									break;											
+
+												case 8:
+															if(Led8)
+															{
+															SendByte_74HC595(0x08);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led8==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;	
+
+												case 9:
+													if(Led20==0)
+													{
+													SendByte_74HC595(0x00);
+													OD0=0;
+													OD1=1;
+													OD2=1;									
+													}
+                          break;	
+
+                       			case 10:
+															if(Led2)
+															{
+															SendByte_74HC595(0x02);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led2==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;													
+									 }
+
+//								CurrentCount=CurrentTemp;
+								 }
+							}
+							else
+							{
+							 DisplayToggleU=0;
+							}
+							
+//***********************SHOW TIMER***********************************
+                 
+											if(ChInputAct8 == 1 || ChInputAct9 == 1)
+													{
+													  count2=SetTim;  //   call count
+														Led10=1;
+														TimerForP2++;
+														if(TimerForP2 > 3000)
+														{ 
+														if(CompFlag)
+														{
+														count2=Minuscount;
+														}
+                           	if(CompFlag==0)
+														{
+														count2=0x00;
+														}	
+															Led10=0;
+															ChInputAct8=0;
+															ChInputAct9=0;
+														  TimerForP2=0;
+														
+														MainMenu=Toggle_caseUO;
+														}
+													}
+//******************************************************************
+                 if(CompFlag)	
+								 {
+									 	
+									 CompFlag1=0;
+									 FlagToStop=0;
+									 NewAllcount=count2*60000;
+									
+//									 TotalCount++;
+									 	if(CurrentTemp < Setcount)
+										{
+	                     RelayDelay++;
+											if(RelayDelay > 1000)
+											{
+												RelayDelay=0;
+											 RELAY1 = ON;
+											 Led1 = 1;
+											}
+										}
+										else
+										{
+											RELAY1 = OFF;
+										Led1 = 0;
+										
+											Newcount2=Minuscount;
+										}
+									 TotalCount++;
+									  if(TotalCount < NewAllcount)
+									  {
+										 Led4=0;
+										
+										 CountForLed++;
+										 if(CountForLed < 500)
+										 {
+										   if(CountForLed < 250)
+										   {
+										     Led20=1;
+										   }
+											 else
+											 {
+											   Led20=0;
+											 }
+										 }
+										 else
+										 {
+										   CountForLed=0;
+										 }
+
+									 }
+                   else
+									 {
+										 CompFlag=0;
+
+									 }										 
+								  }
+								else if(TotalCount == 0 && PowFlag == 1)
+								  {   
+									   SetButton=1;
+//                      TimerNew=0;									 
+									    CompFlag1=1;
+											TotalCount = 0;
+										  Led4=1;
+										  Led8=1;
+										  Led20=0;						 
+								 }															
+							 
+
+									
+//***********************KEY READ****************************************										
+										if(Input1==0 || Input2==0)
+											 {
+									
+//**********************FOR INCREMENT***********************************  
+
+													 if( Setcount <= 400)
+														{												 
+														if(Input1 == 1)
+														{
+															  Timeref_8s=0;
+																Timeref_1s++;
+																if(Timeref_1s > 500)
+																{
+ 																	 Timeref_1s = 0;	
+															 
+																	if((Setcount - Setold_count) >= 100)
+																	{
+																		Setcount += 100;																				 
+																	}
+																	else if((Setcount - Setold_count) >= 10)
+																	{
+																		Setcount += 10;
+																	}
+																	else  
+																	{
+																		Setcount++;
+																	
+																	}
+																	
+																	if(Setcount > 400)
+																	{ 
+																		
+																		Setcount=400;
+																	}                                             
+																}		
+														}											
+													else
+													{
+													 flag1 =0;
+												 Setold_count=Setcount;	
+													}
+												}
+														
+//***************************FOR DECREMENT***************************************	
+
+                      if(Setcount > 0)
+											{														
+														if(Input2 == 1)
+														{  
+															  Timeref_8s=0;
+																Timeref_2s++;
+																if(Timeref_2s > 500)
+																{
+																	Timeref_2s = 0;	
+															 
+																	if(( old_count2-Setcount ) >= 100)
+																	{
+																		Setcount -= 100;	
+																		
+																	}
+																	else if((old_count2 -Setcount ) >= 10)
+																	{
+																	Setcount -= 10;
+																	}
+																	else
+																	{
+															  		Setcount--;
+																	}
+																	if(Setcount  < 1)
+																	{ 
+																		Setcount=0;
+																	}
+																}
+														}		 
+														else
+														{
+															flag2 =0;
+															old_count2=Setcount;
+														}
+													}														
+//**********************DETECT KEY AT LOW FOR EXIT************************* 														
+//												  Timeref_8s=0;
+//												 }
+												 Timeref_8s++;
+												 if(WriteValue)
+																		{
+												 EE_wrt( 0x81, (unsigned char*)&Timeref_8s,sizeof(Timeref_8s));
+																		}
+												 if(Timeref_8s>7000)
+												 {
+														if(WriteValue)
+														{
+														 EE_wrt( 0x77, (unsigned char*)&Setcount,sizeof(Setcount));
+														}
+														 Led2=0;
+													Timeref_8s=0;
+													FlagForToggleDis1=0;
+													MainMenu=Open_Case;
+												 }
+											 }
+								      }
+                      												
+						       break;	
+//*******************TOGGLE DOWN DISPLAY IN OPEN CASE****************************   
+											
+					case Toggle_caseDO:
+							if(FlagForToggleDis2)
+							 {	
+							          Led10=1;
+									    FlagForToggleDis22=0;
+											FlagForCurrent=0;
+						           FlagForOpen=0;
+											 DisplayToggleD++;
+											if(DisplayToggleD < 500)
+											{
+												if(DisplayToggleD < 250)
+												{
+												  CurrentU++;
+													if(CurrentU >10)
+													{
+													 CurrentU =0;
+													}
+														OD0=1;
+														OD1=1;
+														OD2=1;
+													switch(CurrentU)
+													{		
+												case 0:
+				//										Current=1;
+															SendByte_74HC595(0x54);
+															OD0=0;
+															OD1=1;
+															OD2=0;
+															delay(50);
+						  						    keyRead4();
+//											      	keyRead8();
+															break;
+														
+												case 1:
+															SendByte_74HC595(0x73);
+				//										NewCount=count2;
+															OD0=1;
+															OD1=0;
+															OD2=0;
+															delay(50);
+                               keyRead7();												
+						//								keyRead5();		
+															break;
+														
+												case 2:
+															SendByte_74HC595(0x3F);
+													    
+															OD0=0;
+															OD1=0;
+															OD2=0;
+															delay(50);
+														  keyRead6();
+						//								keyRead9();
+															break;
+														 
+												case 3:
+															SendByte_74HC595(0x00);
+															OD0=1;
+															OD1=0;
+															OD2=1;
+															delay(50);
+								   
+															break;
+												
+												case 4:
+															SendByte_74HC595(0x00);
+//															NewCount=count2;
+															OD0=0;
+															OD1=0;
+															OD2=1;
+															delay(50);	
+				//									  keyRead5();		
+															break;
+											
+												case 5:
+															SendByte_74HC595(0x00);
+//															NewCount2=count2;
+															OD0=1;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//														keyRead9();
+												      keyRead3();
+															break; 
+
+												case 6:
+															if(Led2)
+															{
+																SendByte_74HC595(0x02);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+															}
+															if(Led2==0)
+															{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;									
+															}
+															break;
+
+												case 7:
+															if(Led20)
+															{
+															SendByte_74HC595(0x20);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}
+																												
+															break;
+															
+												case 8:
+															if(Led4)
+															{
+															SendByte_74HC595(0x04);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led4==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;	
+
+												case 9:
+															if(Led8)
+															{
+															SendByte_74HC595(0x08);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led8==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;															
+														
+														case 10:
+															if(Led10)
+															{
+															SendByte_74HC595(0x10);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led10==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;
+													 } 	
+												}
+												else
+												{
+												  Current3++;
+													if(Current3 > 10)
+													{
+													 Current3 =0;
+													}
+														OD0=1;
+														OD1=1;
+														OD2=1;
+													switch(Current3)
+													{		
+												 case 0:
+															SendByte_74HC595(0x54);
+															OD0=0;
+															OD1=1;
+															OD2=0;
+															delay(50);
+															keyRead4();
+//				  										keyRead8();
+															break;
+													 
+													case 1:
+															SendByte_74HC595(0x73);
+															OD0=1;
+															OD1=0;
+															OD2=0;
+															delay(50);
+//															keyRead2();
+														keyRead7();
+															break;
+													
+													case 2:
+															SendByte_74HC595(0x3F);
+															OD0=0;
+															OD1=0;
+															OD2=0;
+															delay(50);
+//															keyRead1();
+				  									keyRead6();
+				//										delay(1000);
+															break; 
+														 
+												case 3:
+															SendByte_74HC595(seg[SetTim%10]);
+															OD0=1;
+															OD1=0;
+															OD2=1;
+															delay(50);
+//				                      keyRead4();
+															break;
+												
+												case 4:
+															SendByte_74HC595(seg[(SetTim/10)%10]);
+//															NewCount=count2;
+															OD0=0;
+															OD1=0;
+															OD2=1;
+															delay(50);	
+				//									  keyRead5();		
+															break;
+											
+												case 5:
+															SendByte_74HC595(seg[(SetTim/100)%10]);
+										          NewCount3=SetTim;
+															OD0=1;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//															keyRead9();
+												      keyRead3();
+															break;  
+												
+												case 6:
+															if(Led2)
+															{
+																SendByte_74HC595(0x02);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+															}
+															if(Led2==0)
+															{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;									
+															}
+															break;
+
+													case 7:
+																if(Led4)
+																{
+																SendByte_74HC595(0x04);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+																}		
+																if(Led4==0)
+																{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;														
+																}
+														break;	
+																
+												case 8:
+															if(Led8)
+															{
+															SendByte_74HC595(0x08);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led8==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;			
+
+											case 9:
+												     if(Led20==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;									
+															}	
+                          break;
+															
+														case 10:
+															if(Led10)
+															{
+															SendByte_74HC595(0x10);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led10==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;															
+												
+													 }
+												}
+											}
+											else
+											{
+											 DisplayToggleD=0;
+											}
+											
+											if(CurrentTemp <  0x2BC)
+														 {
+																MainMenu=Toggle_caseDC;
+																FlagForToggleDis22=1;
+																FlagForToggleDis2=0;
+														 }
+														 else
+														 {
+																MainMenu=Toggle_caseDO;
+																FlagForToggleDis2=1;
+																FlagForToggleDis22=0;
+															 
+														 }
+//********************************************************************
+													 if(CompFlag1==1 && TimerNew == 0)
+													 {
+													  CompFlag=0;
+													 }
+													 if(CompFlag1==0 && TimerNew == 1)
+													 {
+													  CompFlag=1;
+													 }			
+//*****************************************************************
+                if(CompFlag)	
+								 {
+									 CompFlag1=0;
+									 FlagToStop=0;
+									 NewAllcount=count2*60000;
+									
+//									 TotalCount++;
+									  if(CurrentTemp < Setcount)
+										{
+	                     RelayDelay++;
+											if(RelayDelay > 1000)
+											{
+												RelayDelay=0;
+											 RELAY1 = ON;
+											 Led1 = 1;
+											}
+										}
+										else
+										{
+											RELAY1 = OFF;
+										Led1 = 0;
+										
+										Newcount2=Minuscount;	
+										}
+									 TotalCount++;
+									  if(TotalCount < NewAllcount)
+									  {
+										 Led4=0;
+//										 TotalCount++;
+										 CountForLed++;
+										 if(CountForLed < 500)
+										 {
+										   if(CountForLed < 250)
+										   {
+										     Led20=1;
+										   }
+											 else
+											 {
+											   Led20=0;
+											 }
+										 }
+										 else
+										 {
+										   CountForLed=0;
+										 }
+
+									 }
+                   else
+									 {
+										 CompFlag=0;
+
+									 }										 
+								  }
+								else if(TotalCount == 0 && PowFlag == 1)
+								  {   
+									   SetButton=1;
+//                      TimerNew=0;									 
+									    CompFlag1=1;
+											TotalCount = 0;
+										  Led4=1;
+										  Led8=1;
+										  Led20=0;						 
+								 }									 
+//*****************SHOW TEMP**************************************
+									
+							        if(ChInputAct6 == 1 || ChInputAct7 == 1)
+											{
+//												     FlagSepToShowTemp=1;
+												      FlagShowU=1;
+												      MainMenu=FlagShow_U;
+												      FlagForToggleDis2 = 0;
+//													  CurrentCount=Setcount;//   call count
+														Led2=1;
+														TimerForP1++;
+														if(TimerForP1 > 3000)
+														{
+															FlagForToggleDis2=1;
+															
+															FlagShowU=0;
+															Led2=0;
+															ChInputAct7 = 0;
+															ChInputAct6 = 0;
+														  TimerForP1=0;
+														  MainMenu=Toggle_caseDO;
+														}										  
+										  }
+											
+//********************KEY READ************************************											
+											if(Input3==0 || Input4==0)
+											 {
+											
+//*******************FOR INCREMENT*********************************
+
+                      if( SetTim <= 999)
+											{												 
+											if(Input3 == 1)
+											{
+												  Timeref_9s=0;
+													flag3 = 1;
+													Timeref_3s++;
+													if(Timeref_3s > 500)
+													{
+														
+												    Timeref_3s = 0;
+														if((SetTim - old_count3) >= 100)
+														{
+															SetTim += 100;	
+									
+														}
+														else if((SetTim - old_count3) >= 10)
+														{
+															SetTim += 10;	
+														}
+														else
+														{
+															SetTim++;
+														
+																
+														}
+															if(SetTim  > 999)
+														{
+															SetTim=999;
+														}
+													}
+															
+											}		 
+											else
+											{
+												flag3 =0;
+												old_count3=SetTim;
+											}
+										}
+														
+//*******************FOR DECREMENT******************************		 
+
+                      if(SetTim > 0)
+											{											
+											if(Input4 == 1)
+											{
+												  Timeref_9s=0;
+													flag4 = 1;
+													Timeref_4s++;
+													if(Timeref_4s > 500)
+													{
+														Timeref_4s = 0;
+														if(( old_count4- SetTim) >= 100)
+														{
+															SetTim -= 100;	
+														}
+														else if(( old_count4- SetTim) >= 10)
+														{
+															SetTim -= 10;	
+														}
+														else
+														{
+															SetTim--;
+															
+																
+														
+														}
+															if(SetTim  < 1)
+														{
+															SetTim=0;
+														}
+													}
+															
+											}		 
+											else
+											{
+												flag4 =0;
+												old_count4=SetTim;
+											}
+										}
+//**********************DETECT KEY AT LOW FOR EXIT************************* 														
+												
+												
+												 Timeref_9s++;
+												 if(WriteValue)
+																		{
+												 EE_wrt( 0x91, (unsigned char*)&Timeref_9s,sizeof(Timeref_9s));
+																		}
+												 if(Timeref_9s>7000)
+												 {
+													 if(CompFlag1 == 0 && TimerNew == 1)
+													 {
+															count2=SetTim;
+															TotalCount=0;
+															
+													 }
+													 if(CompFlag1 == 1 && TimerNew == 0)
+													 {
+													  count2=0x00;
+													 }
+													 if(WriteValue)
+															{
+															 EE_wrt( 0x99, (unsigned char*)&SetTim,sizeof(SetTim));
+																Minuscount=SetTim;
+															}
+															Led10=0;
+													Timeref_9s=0;
+													FlagForToggleDis2=0;
+													MainMenu=Open_Case;
+												 }
+											 }
+										 } 
+                   break;
+										 
+//*******************TOGGLE UPPER DISPLAY IN CURRENT CASE***************************
+           case Toggle_caseUC:					
+								if(FlagForToggleDis11)
+								{	
+                  Led2=1;
+								 FlagFortimer=0;
+								 FlagForOpen=0;
+								 FlagForCurrent=0;
+				
+							   DisplayToggleU++;
+							if(DisplayToggleU < 500)
+							{
+							  if(DisplayToggleU < 250)
+								{
+								  CurrentU++;
+									if(CurrentU >11)
+									{
+									 CurrentU =0;
+									}
+										OD0=1;
+										OD1=1;
+										OD2=1;
+									switch(CurrentU)
+									{		
+								case 0:
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=0;
+											delay(50);
+								      keyRead8();
+		//						    keyRead4();
+											break;
+										
+							  case 1:
+											SendByte_74HC595(0x00);
+											OD0=1;
+											OD1=0;
+											OD2=0;
+											delay(50);	
+		   								keyRead2();	
+//                      keyRead7();								
+											break;
+										
+								case 2:
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=0;
+											OD2=0;
+											delay(50);
+//										  keyRead6();
+	                    keyRead1();
+											break;
+										 
+							  case 3:
+									    SendByte_74HC595(seg[count2%10]);
+											OD0=1;
+											OD1=0;
+											OD2=1;
+											delay(50);
+//						        keyRead4();
+											break;
+								
+					      case 4:
+											SendByte_74HC595(seg[(count2/10)%10]);
+											OD0=0;
+											OD1=0;
+											OD2=1;
+											delay(50);	
+//									  keyRead5();		
+											break;
+							
+					      case 5:
+											SendByte_74HC595(seg[(count2/100)%10]);
+								      NewCount=count2;
+											OD0=1;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											keyRead9();
+											break;  
+								
+                case 6:
+											if(Led10)
+										{
+											SendByte_74HC595(0x10);
+											OD0=0;
+											OD1=1;
+											OD2=1;
+										}
+										if(Led10==0)
+										{
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=1;									
+										}		
+							      break;	
+
+							case 7:
+										if(Led20)
+										{
+										SendByte_74HC595(0x20);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}
+									
+										
+																								
+										break;
+										
+							case 8:
+										if(Led4)
+										{
+										SendByte_74HC595(0x04);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}		
+										if(Led4==0)
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;														
+										}
+								break;
+
+							case 9:
+										if(Led1 == 1)
+										{
+										SendByte_74HC595(0x01);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}		
+										else
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;														
+										}
+								break;	
+
+							case 10:
+										if(Led8)
+										{
+										SendByte_74HC595(0x08);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}		
+										if(Led8==0)
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;														
+										}
+								break;										
+										
+															case 11:
+															if(Led2)
+															{
+															SendByte_74HC595(0x02);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led2==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;
+									 } 
+								}
+								else
+								{
+								  Current2++;
+									if(Current2 > 11)
+									{
+									 Current2 =0;
+									}
+										OD0=1;
+										OD1=1;
+										OD2=1;									
+									switch(Current2)
+									{		
+								 case 0:
+											SendByte_74HC595(seg[Setcount%10]);
+											OD0=0;
+											OD1=1;
+											OD2=0;
+											delay(50);
+//											keyRead4();
+										  keyRead8();
+											break;
+									 
+								case 1:
+											SendByte_74HC595(seg[(Setcount/10)%10]);
+											OD0=1;
+											OD1=0;
+											OD2=0;
+											delay(50);
+											keyRead2();
+//										  keyRead7();
+											break;
+									
+								case 2:
+											SendByte_74HC595(seg[(Setcount/100)%10]);
+											OD0=0;
+											OD1=0;
+											OD2=0;
+											delay(50);
+											keyRead1();
+//									    keyRead6();
+//										delay(1000);
+											break; 
+										 
+							  case 3:
+									    SendByte_74HC595(seg[count2%10]);
+											OD0=1;
+											OD1=0;
+											OD2=1;
+											delay(50);
+//						        keyRead4();
+											break;
+								
+					      case 4:
+											SendByte_74HC595(seg[(count2/10)%10]);
+//											NewCount=count2;
+											OD0=0;
+											OD1=0;
+											OD2=1;
+											delay(50);	
+//									  keyRead5();		
+											break;
+							
+					      case 5:
+											SendByte_74HC595(seg[(count2/100)%10]);
+//											NewCount2=count2;
+											OD0=1;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											keyRead9();
+											break; 
+
+                case 6:
+											if(Led10)
+										{
+											SendByte_74HC595(0x10);
+											OD0=0;
+											OD1=1;
+											OD2=1;
+										}
+										else
+										{
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=1;									
+										}		
+							      break;
+
+
+										
+							case 7:
+										if(Led4)
+										{
+										SendByte_74HC595(0x04);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}		
+										else
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;														
+										}
+								break;
+
+							case 8:
+										if(Led1==1)
+										{
+										SendByte_74HC595(0x01);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}		
+										else
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;														
+										}
+								break;	
+
+							case 9:
+										if(Led8)
+										{
+										SendByte_74HC595(0x08);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}		
+										if(Led8==0)
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;														
+										}
+								break;	
+
+              case 10:
+									 if(Led20==0)
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;									
+										}
+                break;
+
+															case 11:
+															if(Led2)
+															{
+															SendByte_74HC595(0x02);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led2==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;										
+										
+									 }
+
+//								CurrentCount=CurrentTemp;
+								 }
+							}
+							else
+							{
+							 DisplayToggleU=0;
+							}
+							
+//***********************SHOW TIMER***********************************
+                 
+											if(ChInputAct8 == 1 || ChInputAct9 == 1)
+													{
+													  count2=SetTim;  //   call count
+														Led10=1;
+														TimerForP2++;
+														if(TimerForP2 > 3000)
+														{
+														if(CompFlag)
+														{
+														count2=Minuscount;
+														}
+                           	if(CompFlag==0)
+														{
+														count2=0x00;
+														}															
+															Led10=0;
+															ChInputAct8=0;
+															ChInputAct9=0;
+														  TimerForP2=0;
+														MainMenu=Toggle_caseUC;
+														}
+													}
+									
+//*****************************************************************
+									if(CompFlag)	
+								 {
+									 	
+									 CompFlag1=0;
+									 FlagToStop=0;
+									 NewAllcount=count2*60000;
+										 if(CurrentTemp < Setcount)
+										{
+	                     RelayDelay++;
+											if(RelayDelay > 1000)
+											{
+												RelayDelay=0;
+											 RELAY1 = ON;
+											 Led1 = 1;
+											}
+										}
+										else
+										{
+											RELAY1 = OFF;
+										  Led1 = 0;
+											
+											Newcount2=Minuscount;
+										}
+									 
+									 TotalCount++;
+									  if(TotalCount < NewAllcount)
+									  {
+										 Led4=0;
+									 
+										 CountForLed++;
+										 if(CountForLed < 500)
+										 {
+										   if(CountForLed < 250)
+										   {
+										     Led20=1;
+										   }
+											 else
+											 {
+											   Led20=0;
+											 }
+										 }
+										 else
+										 {
+										   CountForLed=0;
+										 }
+
+									 }
+                   else
+									 {
+										 CompFlag=0;
+
+									 }										 
+								  }
+								 else if(TotalCount == 0 && PowFlag == 1)
+								  {   
+									   SetButton=1;
+//                      TimerNew=0;									 
+									    CompFlag1=1;
+											TotalCount = 0;
+										  Led4=1;
+										  Led8=1;
+										  Led20=0;						 
+								 }				
+									
+//***********************KEY READ****************************************										
+										if(Input1==0 || Input2==0)
+											 {
+											
+//**********************FOR INCREMENT***********************************  
+		                      if( Setcount <= 400)
+											     {
+														if(Input1 == 1)
+														{   
+															  Timeref_8s=0;
+																flag1 = 1;
+																Timeref_1s++;
+																if(Timeref_1s > 500)
+																{
+																	Timeref_1s = 0;	
+
+																	if((Setcount - Setold_count) >= 100)
+																	{
+																		Setcount += 100;																				 
+																	}
+																	else if((Setcount - Setold_count) >= 10)
+																	{
+																	  Setcount += 10;
+																	}
+																	else
+																	{
+																		Setcount++;																	
+																	}
+																	
+																	if(Setcount  > 400)
+																	{ 																		
+																		Setcount=400;
+																	}                                             
+																}		
+														}		 
+												    else
+														{
+															flag1 =0;
+															Setold_count=Setcount;
+														}
+													}
+														
+//***************************FOR DECREMENT***************************************	
+														 if(Setcount > 0)
+											      {	
+														if(Input2 == 1)
+														{
+															  Timeref_8s=0;
+																Timeref_2s++;
+																if(Timeref_2s > 500)
+																{
+																	Timeref_2s = 0;	
+												
+																	if((old_count2 - Setcount) >= 100)
+																	{
+																		Setcount -= 100;	
+																	}
+																	else if(( old_count2- Setcount) >= 10)
+																	{
+																	Setcount -= 10;
+																	}
+																	else
+																	{
+																	Setcount--;
+																	
+																	} 
+																	if(Setcount  < 1)
+																	{
+																		Setcount=0;
+																	}
+																}
+															
+														}		 
+														else
+														{
+															flag2 =0;
+														  old_count2=Setcount;
+														}
+													}
+//**********************DETECT KEY AT LOW FOR EXIT************************* 														
+											
+												 Timeref_8s++;
+												 if(WriteValue)
+																		{
+												 EE_wrt( 0x81, (unsigned char*)&Timeref_8s,sizeof(Timeref_8s));
+																		}
+												 if(Timeref_8s>7000)
+												 {
+													 if(WriteValue)
+														{
+														EE_wrt( 0x77, (unsigned char*)&Setcount,sizeof(Setcount));
+														}
+													Led2=0;
+													Timeref_8s=0;
+													FlagForToggleDis11=0;
+													MainMenu=Open_Case;
+												 }
+											 }
+								      }	
+						       break;	
+//**********************TOGGLE DOWN DISPLAY IN CURRENT CASE****************************             
+						case Toggle_caseDC:
+								if(FlagForToggleDis22)
+								 {	
+								Led10=1;
+									  FlagForToggleDis2=0;
+											CurrentTemp=(600*(ReadingAvg-127))/1044;                
+											FlagForOpen=0;
+											FlagForCurrent=0;
+						
+											  DisplayToggleD++;
+											if(DisplayToggleD < 500)
+											{
+												if(DisplayToggleD < 250)
+												{
+												  CurrentU++;
+													if(CurrentU > 11)
+													{
+													 CurrentU =0;
+													}
+														OD0=1;
+														OD1=1;
+														OD2=1;													
+													switch(CurrentU)
+													{		
+												case 0:
+				//										Current=1;
+															SendByte_74HC595(seg[CurrentCount%10]);
+															OD0=0;
+															OD1=1;
+															OD2=0;
+															delay(50);
+						  						    keyRead4();
+//											      	keyRead8();
+															break;
+														
+												case 1:
+															SendByte_74HC595(seg[(CurrentCount/10)%10]);
+				//										NewCount=count2;
+															OD0=1;
+															OD1=0;
+															OD2=0;
+															delay(50);	
+						                 keyRead7();		
+															break;
+														
+												case 2:
+															SendByte_74HC595(seg[(CurrentCount/100)%10]);
+															OD0=0;
+															OD1=0;
+															OD2=0;
+															delay(50);
+														 keyRead6();
+					
+															break;
+														 
+												case 3:
+															SendByte_74HC595(0x00);
+															OD0=1;
+															OD1=0;
+															OD2=1;
+															delay(50);
+								   
+															break;
+												
+												case 4:
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=0;
+															OD2=1;
+															delay(50);	
+				//									  keyRead5();		
+															break;
+											
+												case 5:
+															SendByte_74HC595(0x00);
+															OD0=1;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//														keyRead9();
+												      keyRead3();
+															break; 
+
+											case 6:
+														if(Led2)
+														{
+															SendByte_74HC595(0x02);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+														}
+														if(Led2==0)
+														{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;									
+														}
+														break;
+
+												case 7:
+															if(Led20)
+															{
+															SendByte_74HC595(0x20);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}
+//															else
+//															{
+//															SendByte_74HC595(0x00);
+//															OD0=0;
+//															OD1=1;
+//															OD2=1;									
+//															}														
+															break;
+															
+												case 8:
+															if(Led4)
+															{
+															SendByte_74HC595(0x04);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led4==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;	
+
+												case 9:
+															if(Led1==1)
+															{
+															SendByte_74HC595(0x01);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															else
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;	
+
+												case 10:
+															if(Led8)
+															{
+															SendByte_74HC595(0x08);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led8==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;	
+
+														case 11:
+															if(Led10)
+															{
+															SendByte_74HC595(0x10);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led10==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;															
+														
+													 } 	
+												}
+												else
+												{
+												  Current3++;
+													if(Current3 > 11)
+													{
+													 Current3 =0;
+													}
+														OD0=1;
+														OD1=1;
+														OD2=1;													
+													switch(Current3)
+													{		
+												 case 0:
+															SendByte_74HC595(seg[CurrentCount%10]);
+															OD0=0;
+															OD1=1;
+															OD2=0;
+															delay(50);
+															keyRead4();
+//				  										keyRead8();
+															break;
+													 
+												case 1:
+															SendByte_74HC595(seg[(CurrentCount/10)%10]);
+															OD0=1;
+															OD1=0;
+															OD2=0;
+															delay(50);
+//														keyRead2();
+														  keyRead7();
+															break;
+													
+												case 2:
+															SendByte_74HC595(seg[(CurrentCount/100)%10]);
+															OD0=0;
+															OD1=0;
+															OD2=0;
+															delay(50);
+//															keyRead1();
+													    keyRead6();
+				//										delay(1000);
+															break; 
+														 
+												case 3:
+															SendByte_74HC595(seg[SetTim%10]);
+															OD0=1;
+															OD1=0;
+															OD2=1;
+															delay(50);
+				
+															break;
+												
+												case 4:
+															SendByte_74HC595(seg[(SetTim/10)%10]);
+												        SetTim2=SetTim;
+//														NewCount=count2;
+															OD0=0;
+															OD1=0;
+															OD2=1;
+															delay(50);	
+				//									  keyRead5();		
+															break;
+											
+												case 5:
+															SendByte_74HC595(seg[(SetTim/100)%10]);
+//														NewCount2=count2;
+															OD0=1;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//															keyRead9();
+												      keyRead3();
+															break; 
+
+												case 6:
+															if(Led2)
+															{
+																SendByte_74HC595(0x02);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+															}
+															else
+															{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;									
+															}
+															break;	
+
+													case 7:
+																if(Led4)
+																{
+																SendByte_74HC595(0x04);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+																}		
+																if(Led4==0)
+																{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;														
+																}
+														break;		
+
+													case 8:
+															if(Led1==1)
+															{
+															SendByte_74HC595(0x01);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															else
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+												  	  break;  	
+
+												case 9:
+															if(Led8)
+															{
+															SendByte_74HC595(0x08);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led8==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;		
+
+                        case 10:
+													    if(Led20==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;									
+															}	
+                              break;	
+														case 11:
+															if(Led10)
+															{
+															SendByte_74HC595(0x10);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led10==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;															
+														
+													 }
+														
+												}
+												   CurrentCount=CurrentTemp;
+                           
+											}
+											else
+											{
+											 DisplayToggleD=0;
+												
+											}
+											
+
+											if(CurrentTemp <  0x2BC)
+														 {
+														  MainMenu=Toggle_caseDC;
+															 FlagForToggleDis22=1;
+															 	 FlagForToggleDis2=0;
+														 }
+														 else
+														 {
+														  MainMenu=Toggle_caseDO;
+															 FlagForToggleDis2=1;
+															  FlagForToggleDis22=0;
+														 }
+//*********************COMITNUE TOGGLE***********************
+													 if(CompFlag1==1 && TimerNew == 0)
+													 {
+													  CompFlag=0;
+													 }
+													 if(CompFlag1==0 && TimerNew == 1)
+													 {
+													  CompFlag=1;
+													 }
+//**************************************************************
+								if(CompFlag)	
+								 {
+									 CompFlag1=0;
+									 FlagToStop=0;
+									 NewAllcount=count2*60000;
+									 if(CurrentTemp < Setcount)
+										{
+	                     RelayDelay++;
+											if(RelayDelay > 1000)
+											{
+												RelayDelay=0;
+											 RELAY1 = ON;
+											 Led1 = 1;
+											}
+										}
+										else
+										{
+											RELAY1 = OFF;
+										Led1 = 0;
+										
+											Newcount2=Minuscount;
+										}
+									
+									 TotalCount++;
+									  if(TotalCount < NewAllcount)
+									  {
+										 Led4=0;
+//										 TotalCount++;
+										 CountForLed++;
+										 if(CountForLed < 500)
+										 {
+										   if(CountForLed < 250)
+										   {
+										     Led20=1;
+										   }
+											 else
+											 {
+											   Led20=0;
+											 }
+										 }
+										 else
+										 {
+										   CountForLed=0;
+										 }
+
+									 }
+                   else
+									 {
+										 CompFlag=0;
+
+									 }										 
+								  }
+								else if(TotalCount == 0 && PowFlag == 1)
+								  {   
+									   SetButton=1;
+//                      TimerNew=0;									 
+									    CompFlag1=1;
+											TotalCount = 0;
+										  Led4=1;
+										  Led8=1;
+										  Led20=0;						 
+								 }		 
+													
+
+//*****************SHOW TEMP**************************************
+											
+									
+							        if(ChInputAct6 == 1 || ChInputAct7 == 1)
+											{
+													  CurrentCount=Setcount;//   call count
+												    Led2=1;
+												   
+														TimerForP1++;
+														if(TimerForP1 > 3000)
+														{
+															Led2=0;
+															ChInputAct7 = 0;
+															ChInputAct6 = 0;
+														  TimerForP1=0;
+														  MainMenu=Toggle_caseDC;
+														}
+										  
+										  }
+							     	
+											
+											
+											
+											
+//********************KEY READ************************************											
+											if(Input3==0 || Input4==0)
+											 {
+												 
+//*******************FOR INCREMENT*********************************
+                      if( SetTim <= 999)
+											{
+											if(Input3 == 1)
+											{
+												  Timeref_9s=0;
+													flag3 = 1;
+													Timeref_3s++;
+													if(Timeref_3s > 500)
+													{
+														Timeref_3s = 0;	
+														if((SetTim - old_count3) >= 100)
+														{
+															SetTim += 100;	
+														}
+														else if((SetTim - old_count3) >= 10)   
+														{
+															SetTim += 10;	
+														}
+														else
+														{
+															SetTim++;
+															
+														}
+														if(SetTim  > 999)
+														{
+															SetTim=999;
+														}
+													}				
+											}		 
+											else
+											{
+												flag3 =0;
+												old_count3=SetTim;
+											}
+										}
+														
+//*******************FOR DECREMENT******************************		 
+				                 
+                      if(SetTim > 0)
+											{												
+											if(Input4 == 1)
+											{
+												  Timeref_9s=0;
+													flag4 = 1;
+													Timeref_4s++;
+													if(Timeref_4s > 500)
+													{
+														Timeref_4s = 0;	
+														if(( old_count4 - SetTim) >= 100)
+														{
+															SetTim -= 100;	
+														}
+													  else if(( old_count4 - SetTim) >= 10)
+														{
+															SetTim -= 10;	
+														}
+														else
+														{
+															SetTim--;
+														}
+														if(SetTim  < 1)
+														{
+															SetTim=0;
+														}
+													}
+															
+											}		 
+											else
+											{
+												flag4 =0;
+												old_count4=SetTim;
+											}
+										}
+//**********************DETECT KEY AT LOW FOR EXIT************************* 														
+												  
+												
+												 Timeref_9s++;
+												 if(WriteValue)
+													{
+													 EE_wrt( 0x91, (unsigned char*)&Timeref_9s,sizeof(Timeref_9s));
+													}
+												 if(Timeref_9s > 7000)
+												 {
+													 if(CompFlag1 == 0 && TimerNew == 1)
+													 {
+														count2=SetTim;
+														 TotalCount=0;
+														
+													 }
+													 if(CompFlag1 == 1 && TimerNew == 0)
+													 {
+													  count2=0x00;
+													 }
+													 
+													 // write SetTim here
+													 		 if(WriteValue)	
+															{
+																EE_wrt( 0x99, (unsigned char*)&SetTim,sizeof(SetTim));
+																 Minuscount=SetTim;
+															}
+															Led10=0;
+														Timeref_9s=0;
+														FlagForToggleDis22=0;
+														MainMenu=Open_Case;
+												 }
+											 }
+										 }
+	 
+                										 
+                   break;
+//*****************SHOW SET TEMP IN OPEN CASE**************************************	          	 
+						case FlagShow_U:
+							    if(FlagShowU)
+							     {
+//									    CurrentTemp=(600*(ReadingAvg-127))/1044;
+									    FlagForToggleDis22=0;
+										 FlagForToggleDis2=0;
+//										FlagFortimer=1;
+											FlagForOpen=0;
+											FlagForCurrent=0;
+									
+											 DisplayToggleD++;
+											if(DisplayToggleD < 500)
+											{
+												if(DisplayToggleD < 250)
+												{
+												  CurrentU++;
+													if(CurrentU >8)
+													{
+													 CurrentU =0;
+													}
+														OD0=1;
+														OD1=1;
+														OD2=1;
+													switch(CurrentU)
+													{		
+												case 0:
+				//										Current=1;
+															SendByte_74HC595(seg[CurrentCount%10]);
+															OD0=0;
+															OD1=1;
+															OD2=0;
+															delay(50);
+						  						    keyRead4();
+//											      	keyRead8();
+															break;
+														
+												case 1:
+															SendByte_74HC595(seg[(CurrentCount/10)%10]);
+				//										NewCount=count2;
+															OD0=1;
+															OD1=0;
+															OD2=0;
+															delay(50);
+                               keyRead7();												
+						//								keyRead5();		
+															break;
+														
+												case 2:
+															SendByte_74HC595(seg[(CurrentCount/100)%10]);
+				//									  NewCount2=count2;
+															OD0=0;
+															OD1=0;
+															OD2=0;
+															delay(50);
+														  keyRead6();
+						//								keyRead9();
+															break;
+														 
+												case 3:
+															SendByte_74HC595(0x00);
+															OD0=1;
+															OD1=0;
+															OD2=1;
+															delay(50);
+								   
+															break;
+												
+												case 4:
+															SendByte_74HC595(0x00);
+//															NewCount=count2;
+															OD0=0;
+															OD1=0;
+															OD2=1;
+															delay(50);	
+				//									  keyRead5();		
+															break;
+											
+												case 5:
+															SendByte_74HC595(0x00);
+//															NewCount2=count2;
+															OD0=1;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//														keyRead9();
+												      keyRead3();
+															break; 
+
+												case 6:
+															if(Led2)
+															{
+																SendByte_74HC595(0x02);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+															}
+															if(Led2==0)
+															{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;									
+															}
+															break;
+
+												case 7:
+															if(Led20)
+															{
+															SendByte_74HC595(0x20);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}
+															if(Led20==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;									
+															}														
+															break;
+															
+												case 8:
+															if(Led4)
+															{
+															SendByte_74HC595(0x04);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led4==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;															
+														
+													 } 	
+												}
+												else
+												{
+												  Current3++;
+													if(Current3 > 7)
+													{
+													 Current3 =0;
+													}
+														OD0=1;
+														OD1=1;
+														OD2=1;
+													switch(Current3)
+													{		
+												 case 0:
+															SendByte_74HC595(seg[CurrentCount%10]);
+															OD0=0;
+															OD1=1;
+															OD2=0;
+															delay(50);
+															keyRead4();
+//				  										keyRead8();
+															break;
+													 
+													case 1:
+															SendByte_74HC595(seg[(CurrentCount/10)%10]);
+															OD0=1;
+															OD1=0;
+															OD2=0;
+															delay(50);
+//															keyRead2();
+														keyRead7();
+															break;
+													
+													case 2:
+															SendByte_74HC595(seg[(CurrentCount/100)%10]);
+															OD0=0;
+															OD1=0;
+															OD2=0;
+															delay(50);
+//															keyRead1();
+				  									keyRead6();
+				//										delay(1000);
+															break; 
+														 
+												case 3:
+															SendByte_74HC595(seg[SetTim%10]);
+															OD0=1;
+															OD1=0;
+															OD2=1;
+															delay(50);
+//				                      keyRead4();
+															break;
+												
+												case 4:
+															SendByte_74HC595(seg[(SetTim/10)%10]);
+//															NewCount=count2;
+															OD0=0;
+															OD1=0;
+															OD2=1;
+															delay(50);	
+				//									  keyRead5();		
+															break;
+											
+												case 5:
+															SendByte_74HC595(seg[(SetTim/100)%10]);
+//															NewCount2=count2;
+															OD0=1;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//															keyRead9();
+												      keyRead3();
+															break;  
+												
+												case 6:
+															if(Led2)
+															{
+																SendByte_74HC595(0x02);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+															}
+															if(Led2==0)
+															{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;									
+															}
+															break;	
+
+													case 7:
+																if(Led4)
+																{
+																SendByte_74HC595(0x04);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+																}		
+																if(Led4==0)
+																{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;														
+																}
+														break;															
+														
+													 }
+                            
+												}
+											}
+											else
+											{
+											 DisplayToggleD=0;
+											}
+											
+//											if(CurrentTemp <  0x2BC)
+//														 {
+//														  MainMenu=Toggle_caseDC;
+//															 FlagForToggleDis22=1;
+//															 	 FlagForToggleDis2=0;
+//														 }
+//														 else
+//														 {
+//														  MainMenu=Toggle_caseDO;
+//															 FlagForToggleDis2=1;
+//															  FlagForToggleDis22=0;
+//														 }
+//*****************SHOW TEMP**************************************
+									
+							        if(ChInputAct6 == 1 || ChInputAct7 == 1)
+											{
+//												     FlagSepToShowTemp=1;
+//												     FlagShowU=1;
+												     FlagForToggleDis22=0;
+												      CurrentCount=Setcount;
+//													     call count
+														Led2=1;
+														TimerForP1++;
+														if(TimerForP1 > 3000)
+														{
+															FlagForToggleDis2=1;
+															MainMenu=Toggle_caseDO;
+															FlagShowU=0;
+															Led2=0;
+															ChInputAct7 = 0;
+															ChInputAct6 = 0;
+														  TimerForP1=0;
+															MainMenu=Toggle_caseDO;
+//														  MainMenu=Open_Case;
+														}
+										  
+										  }
+//***************************************************************
+													 if(CompFlag1==1 && TimerNew == 1)
+													 {
+													     CompFlag=1;
+													 }
+//****************************************************************
+                 	if(CompFlag)	
+								   {
+									 	
+									 CompFlag1=0;
+									 FlagToStop=0;
+									 NewAllcount=count2*60000;
+									
+//									 TotalCount++;
+										 if(CurrentTemp < Setcount)
+										{
+	                     RelayDelay++;
+											if(RelayDelay > 1000)
+											{
+												RelayDelay=0;
+											 RELAY1 = ON;
+											 Led1 = 1;
+											}
+										}
+										else
+										{
+											RELAY1 = OFF;
+										Led1 = 0;
+										Newcount2=Minuscount;
+										}
+									 TotalCount++;
+									  if(TotalCount < NewAllcount)
+									  {
+										 Led4=0;
+//										 TotalCount++;
+										 CountForLed++;
+										 if(CountForLed < 500)
+										 {
+										   if(CountForLed < 250)
+										   {
+										     Led20=1;
+										   }
+											 else
+											 {
+											   Led20=0;
+											 }
+										 }
+										 else
+										 {
+										   CountForLed=0;
+										 }
+
+									 }
+                   else
+									 {
+										 CompFlag=0;
+
+									 }										 
+								  }
+								else if(TotalCount == 0 && PowFlag == 1)
+								  {   
+									   SetButton=1;
+//                      TimerNew=0;									 
+									    CompFlag1=1;
+											TotalCount = 0;
+										  Led4=1;
+										  Led8=1;
+										  Led20=0;						 
+								 }												 
+//********************KEY READ************************************											
+											if(Input3==0 || Input4==0)
+											 {
+												 if((Input3==1)||(Input4==1))
+												 {
+//*******************FOR INCREMENT*********************************
+                       if(SetTim <= 999)
+											 {
+											if(Input3 == 1)
+											{
+													flag3 = 1;
+													Timeref_3s++;
+													if(Timeref_3s > 500)
+													{
+														
+												 
+														if((SetTim - old_count3) >= 100)
+														{
+															count2 += 100;	
+														}
+														else if((SetTim - old_count3) >= 10)
+														{
+															SetTim += 10;	
+														}
+														else
+														{
+															SetTim++;
+															if(WriteValue)
+															{
+															 EE_wrt( 0x99, (unsigned char*)&SetTim,sizeof(SetTim));
+															}
+															Timeref_3s = 0;	
+														}
+															if(SetTim  > 999)
+														{
+														
+															SetTim=0;
+															old_count3 = 0;
+														}
+													}
+															
+											}		 
+											else
+											{
+												flag3 =0;
+//												old_count3=SetTim;
+											}
+										}		
+//*******************FOR DECREMENT******************************		 
+				              if(SetTim > 0)
+											{
+											if(Input4 == 1)
+											{
+													flag4 = 1;
+													Timeref_4s++;
+													if(Timeref_4s > 500)
+													{
+														
+														if((SetTim - old_count4) >= 100)
+														{
+															SetTim -= 100;	
+														}
+														else if((SetTim - old_count4) >= 10)
+														{
+															SetTim -= 10;	
+														}
+														else
+														{
+															SetTim--;
+															if(WriteValue)
+															{
+															 EE_wrt( 0x99, (unsigned char*)&SetTim,sizeof(SetTim));
+															}
+															Timeref_4s = 0;	
+														
+														}
+															if(SetTim  < 1)
+														{
+														
+															SetTim=0;
+															old_count4 = 0;
+														}
+													}
+															
+											}		 
+											else
+											{
+												flag4 =0;
+//												old_count4=SetTim;
+											}
+										}
+//**********************DETECT KEY AT LOW FOR EXIT************************* 														
+												 Timeref_9s=0;
+												 }
+												 Timeref_9s++;
+												 if(WriteValue)
+																		{
+												 EE_wrt( 0x91, (unsigned char*)&Timeref_9s,sizeof(Timeref_9s));
+																		}
+												 if(Timeref_9s>7000)
+												 {
+													 
+//													 if(CompFlag1==1 && TimerNew == 1)
+//													 {
+//														count2=Newcount2;
+//													  
+//													 }
+//													 if(CompFlag1==1 && TimerNew == 0)
+//													 {
+													     count2=SetTim2;
+//													 }													 
+													
+													Timeref_9s=0;
+													FlagForToggleDis2=0;
+													MainMenu=Open_Case;
+												 }
+											 }
+										 }
+                     else
+                     {
+										  FlagForToggleDis2=1;
+											FlagShowU=0;
+										 }											 
+							     break;				
+							   }
+//**********************CURRENT CASE**********************************
+//		 CurrentTemp=(600*(ReadingAvg-127))/1044;
+		
+									if(FlagForCurrent )
+									{     
+                   									
+											FlagForOpen=0;
+											DisplayToggleD++;
+											if(DisplayToggleD < 500)
+											{
+												if(DisplayToggleD < 250)
+												{
+													
+												  CurrentU++;
+													if(CurrentU >11)
+													{
+													 CurrentU =0;
+													}
+													OD0=1;
+													OD1=1;
+													OD2=1;													
+													switch(CurrentU)
+													{		
+												case 0:
+				//										Current=1;
+															SendByte_74HC595(seg[CurrentCount%10]);
+															OD0=0;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//						  						    keyRead4();
+											      	keyRead8();
+															break;
+														
+												case 1:
+															SendByte_74HC595(seg[(CurrentCount/10)%10]);
+				//										NewCount=count2;
+															OD0=1;
+															OD1=0;
+															OD2=0;
+															delay(50);	
+						                 keyRead7();		
+															break;
+														
+												case 2:
+															SendByte_74HC595(seg[(CurrentCount/100)%10]);
+				//							
+															OD0=0;
+															OD1=0;
+															OD2=0;
+															delay(50);
+														  keyRead6();
+					
+															break;
+														 
+												case 3:
+															SendByte_74HC595(seg[count2%10]);
+															OD0=1;
+															OD1=0;
+															OD2=1;
+															delay(50);
+								   
+															break;
+												
+												case 4:
+															SendByte_74HC595(seg[(count2/10)%10]);
+														  NewCount=count2;
+													
+															OD0=0;
+															OD1=0;
+															OD2=1;
+															delay(50);	
+				  									  keyRead5();		
+															break;
+											
+												case 5:
+															SendByte_74HC595(seg[(count2/100)%10]);
+//												      EE_wrt( 0x22, (unsigned char*)&count2,sizeof(count2));
+															OD0=1;
+															OD1=1;
+															OD2=0;
+															delay(50);
+														  keyRead9();
+//												      keyRead3();
+															break; 
+
+											case 6:
+														if(Led2)
+														{
+															SendByte_74HC595(0x02);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+														}
+														if(Led2==0)
+														{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;									
+														}
+														break;
+														
+											case 7:
+														if(Led10)
+													  {
+														SendByte_74HC595(0x10);
+														OD0=0;
+														OD1=1;
+														OD2=1;
+													  }
+													  if(Led10==0)
+													  {
+														SendByte_74HC595(0x00);
+														OD0=0;
+														OD1=1;
+														OD2=1;									
+													  }	
+														break;
+
+                      case 8:
+														if(Led20)
+													  {
+														SendByte_74HC595(0x20);
+														OD0=0;
+														OD1=1;
+														OD2=1;
+													  }
+													  if(Led20==0)
+													  {
+														SendByte_74HC595(0x00);
+														OD0=0;
+														OD1=1;
+														OD2=1;									
+													  }
+														
+                          															
+														break;
+														
+											case 9:
+                            if(Led4)
+														{
+														SendByte_74HC595(0x04);
+														OD0=0;
+														OD1=1;
+														OD2=1;
+														}		
+														if(Led4==0)
+														{
+														SendByte_74HC595(0x00);
+														OD0=0;
+														OD1=1;
+														OD2=1;														
+														}
+												break;
+														
+											case 10:
+                            if(Led1==1)
+														{
+														SendByte_74HC595(0x01);
+														OD0=0;
+														OD1=1;
+														OD2=1;
+														}		
+														else
+														{
+														SendByte_74HC595(0x00);
+														OD0=0;
+														OD1=1;
+														OD2=1;														
+														}
+												break;
+														
+												case 11:
+															if(Led8)
+															{
+															SendByte_74HC595(0x08);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led8==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;														
+														
+													 } 
+                           if(Input5 == 0)
+													{
+													 DisplayToggleD=0;
+													}
+																									
+												}
+												else
+												{
+													
+														if(LowToggle)
+														{
+														 Current3++;
+														if(Current3 > 9)
+														{
+														 Current3 =0;
+														}
+														OD0=1;
+														OD1=1;
+														OD2=1;													
+													switch(Current3)
+													{		
+												 case 0:
+															SendByte_74HC595(seg[CurrentCount%10]);
+															OD0=0;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//														keyRead4();
+////				  								keyRead8();
+															break;
+													 
+												case 1:
+															SendByte_74HC595(seg[(CurrentCount/10)%10]);
+															OD0=1;
+															OD1=0;
+															OD2=0;
+															delay(50);
+////														keyRead2();
+//														  keyRead7();
+															break;
+													
+												case 2:
+															SendByte_74HC595(seg[(CurrentCount/100)%10]);
+															OD0=0;
+															OD1=0;
+															OD2=0;
+															delay(50);
+//															keyRead1();
+//													    keyRead6();
+				//										delay(1000);
+															break; 
+														 
+												case 3:
+															SendByte_74HC595(0x00);
+															OD0=1;
+															OD1=0;
+															OD2=1;
+															delay(50);
+				
+															break;
+												
+												case 4:
+															SendByte_74HC595(0x00);
+//															NewCount=count2;
+															OD0=0;
+															OD1=0;
+															OD2=1;
+															delay(50);	
+//				   									keyRead5();		
+															break;
+											
+												case 5:
+															SendByte_74HC595(0x00);
+//															NewCount2=count2;
+															OD0=1;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//														keyRead9();
+//												    keyRead3();
+															break; 
+
+												case 6:
+															if(Led2)
+															{
+																SendByte_74HC595(0x02);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+															}
+															if(Led2==0)
+															{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;									
+															}
+															break;	
+
+                      case 7:
+                            if(Led4)
+														{
+														SendByte_74HC595(0x04);
+														OD0=0;
+														OD1=1;
+														OD2=1;
+														}		
+														if(Led4==0)
+														{
+														SendByte_74HC595(0x00);
+														OD0=0;
+														OD1=1;
+														OD2=1;														
+														}
+												break;
+
+											case 8:
+                            if(Led1 ==1)
+														{
+														SendByte_74HC595(0x01);
+														OD0=0;
+														OD1=1;
+														OD2=1;
+														}		
+														else
+														{
+														SendByte_74HC595(0x00);
+														OD0=0;
+														OD1=1;
+														OD2=1;														
+														}
+												break;
+
+												case 9:
+															if(Led8)
+															{
+															SendByte_74HC595(0x08);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led8==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;														
+													 }
+												 }
+												 	
+												}
+												   CurrentCount=CurrentTemp;
+                           
+											  }
+											else
+											{
+											 DisplayToggleD=0;
+											}
+//*********************RESET TIMER***********************************											
+											if(Input5 == 1)
+													{      
+														if(Togg)
+														{
+															DisplayToggleD=0;
+															DelayToggle1=0;
+														  LowToggle=0;
+															DelayToggle++;
+															if(DelayToggle > 3000)
+															{
+															Togg=0;
+															}
+														}
+														else
+														{
+															DelayToggle=0;
+														      LowToggle=1;
+																  PowFlag =1;
+													        Minuscount=SetTim;
+																  TimerNew=1;
+																	
+																	FlagT = 0;
+																	count2 = SetTim;
+															DelayToggle1++;
+															if(DelayToggle1 > 3000)
+															{
+                                Togg=1;
+																CompFlag=1;
+															}
+														}
+
+													}
+													else
+													{	
+													BlinkFor=0;
+													}
+							            CurrentCount=CurrentTemp;
+//************************SET TIMER***************************************
+													if(SetButton==0)
+													{
+													if(ChInputAct5==1)
+													 {
+															PowFlag =1;
+															Minuscount=SetTim;
+															TimerNew=1;
+															CompFlag=1;
+															FlagT = 0;
+															count2 = SetTim;												 
+													 } 
+													}
+//**************DECREMENT COUNT AFTER ECH MINUTES****************************														
+                 	if(TotalCount == 60000)	
+									 {
+									  count2--;
+										Minuscount=count2;
+										TotalCount=0;
+									 }
+
+
+//************************SHOW TEMP IN CURRENT CASE*************************	
+
+							        if(ChInputAct6 == 1 || ChInputAct7 == 1)
+											{
+													  CurrentCount=Setcount;  		//   call count
+												    Led2=1;
+														TimerForP1++;
+														if(TimerForP1 > 3000)
+														{
+															Led2=0;
+															ChInputAct7 = 0;
+															ChInputAct6 = 0;
+															TimerForP1=0;
+															MainMenu=Open_Case;
+														}
+										  }
+									 
+//********************SHOW TIMER IN CURRENT CASE*******************************			
+									
+											if(ChInputAct8 == 1 || ChInputAct9 == 1)
+													{
+														count2=SetTim; 
+														Flag0=0;
+														Led10=1;
+														TimerForP2++;
+														if(TimerForP2 > 3000)
+														{
+														
+														if(CompFlag)
+														{
+																count2=Newcount2;
+														}
+
+                             if(CompFlag==0)
+														{
+														count2=0x00;
+														}
+												
+															Led10=0;
+															ChInputAct8=0;
+															ChInputAct9=0;
+														  TimerForP2=0;
+														MainMenu=Open_Case;
+														}
+													}
+										
+
+//**************************BLINK SET COUNT 	DISPLAY AND EDIT***************************			
+                   								
+										 if((Input6 == 1)  &&  (Input7 == 1))
+												 {
+													 if((Input6 == 0)  &&  (Input7 == 0))
+													 {
+													 Temptimer=0;
+													 }
+													 Temptimer++;
+													 if(Temptimer > 4000)
+													 {
+                            
+														 FlagForOpen=0;
+														 Temptimer=0;
+														 MainMenu=Toggle_caseUC;
+														 FlagForToggleDis11=1;
+													 }
+												 }
+                         
+												 
+//************************BLINK SET TIMER DISPLY AND EDIT	**************************
+											 
+											if((Input8 == 1)  &&  (Input9 == 1))
+												 {
+													 if((Input8 == 0)  &&  (Input9 == 0))
+													 {
+													 CloTimer=0;
+													 }
+													 CloTimer++;
+													 if(CloTimer > 4000)
+													 { 
+														 
+														 FlagForOpen=0;
+														 CloTimer=0;
+														 if(CurrentTemp <  0x2BC)
+													   {   
+                             													 
+																MainMenu=Toggle_caseDC;
+																FlagForToggleDis22=1;
+																FlagForToggleDis2=0;
+														 }
+														 else
+														 {
+																MainMenu=Toggle_caseDO;
+																FlagForToggleDis2=1;
+																FlagForToggleDis22=0;
+														 } 
+													 }
+												 }	
+											 												 
+								}
+                
+
+
+							
+						
+//*********************OPEN CASE***********************************	
+	                  if(FlagForOpen)
+	                  {
+											FlagForCurrent=0;
+									DisplayToggleD++;
+								if(DisplayToggleD < 500)
+								{
+									if(DisplayToggleD < 250)
+									{
+													
+													
+											Open++;
+											if(Open > 10)
+											{
+												Open=0;
+											} 
+											OD0=1;
+											OD1=1;
+											OD2=1;
+											switch(Open)
+											{
+									case 0:
+											SendByte_74HC595(0x54 );
+											OD0=0;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											keyRead8();
+//							        keyRead4();
+											break;
+											
+									case 1:
+											SendByte_74HC595(0x73);
+											OD0=1;
+											OD1=0;
+											OD2=0;
+											delay(50);
+//							        keyRead2();
+							        keyRead7();
+											break;
+									
+									case 2:
+											SendByte_74HC595(0x3F);
+											
+											OD0=0;
+											OD1=0;
+											OD2=0;
+											delay(50);
+//											keyRead1();
+											keyRead6();
+											break;
+									
+									case 3:
+											SendByte_74HC595(seg[count2%10]);
+											OD0=1;
+											OD1=0;
+											OD2=1;
+											delay(50);
+				//					    keyRead4();
+											break;
+										
+								 case 4:
+											SendByte_74HC595(seg[(count2/10)%10]);
+//											NewCount=count2;
+											OD0=0;
+											OD1=0;
+											OD2=1;
+											delay(50);	
+											keyRead5();		
+											break;
+									
+								case 5:
+											SendByte_74HC595(seg[(count2/100)%10]);
+											NewCount=count2;
+											OD0=1;
+											OD1=1;
+											OD2=0;
+											delay(50);
+//											keyRead3();
+											keyRead9();
+											break;
+								
+							case 6:
+											if(Led10)
+										{
+											SendByte_74HC595(0x10);
+											OD0=0;
+											OD1=1;
+											OD2=1;
+										}
+										if(Led10==0)
+										{
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=1;									
+										}	
+										break;
+										
+	            case 7:
+										if(Led2)
+										{
+											SendByte_74HC595(0x02);
+											OD0=0;
+											OD1=1;
+											OD2=1;
+										}
+										if(Led2==0)
+										{
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=1;									
+										}
+										break;
+										
+								case 8:
+											if(Led20)
+											{
+											SendByte_74HC595(0x20);
+											OD0=0;
+											OD1=1;
+											OD2=1;
+											}
+											if(Led20==0)
+											{
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=1;									
+											}
+											
+																									
+											break;
+											
+								case 9:
+											if(Led4)
+											{
+											SendByte_74HC595(0x04);
+											OD0=0;
+											OD1=1;
+											OD2=1;
+											}		
+											if(Led4==0)
+											{
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=1;														
+											}
+									break;	
+
+									case 10:
+												if(Led8)
+												{
+												SendByte_74HC595(0x08);
+												OD0=0;
+												OD1=1;
+												OD2=1;
+												}		
+												if(Led8==0)
+												{
+												SendByte_74HC595(0x00);
+												OD0=0;
+												OD1=1;
+												OD2=1;														
+												}
+										break;											
+										
+										}
+									 if(Input5 == 0)
+									{
+									 DisplayToggleD=0;
+									}											
+									}
+									else
+									{
+														if(LowToggle)
+														{
+														 Current3++;
+														if(Current3 > 8)
+														{
+														 Current3 =0;
+														}
+														OD0=1;
+														OD1=1;
+														OD2=1;													
+													switch(Current3)
+													{		
+												 case 0:
+															SendByte_74HC595(0x54);
+															OD0=0;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//														keyRead4();
+////				  								keyRead8();
+															break;
+													 
+												case 1:
+															SendByte_74HC595(0x73);
+															OD0=1;
+															OD1=0;
+															OD2=0;
+															delay(50);
+////														keyRead2();
+//														  keyRead7();
+															break;
+													
+												case 2:
+															SendByte_74HC595(0x3F);
+															OD0=0;
+															OD1=0;
+															OD2=0;
+															delay(50);
+//															keyRead1();
+//													    keyRead6();
+				//										delay(1000);
+															break; 
+														 
+												case 3:
+															SendByte_74HC595(0x00);
+															OD0=1;
+															OD1=0;
+															OD2=1;
+															delay(50);
+				
+															break;
+												
+												case 4:
+															SendByte_74HC595(0x00);
+//															NewCount=count2;
+															OD0=0;
+															OD1=0;
+															OD2=1;
+															delay(50);	
+//				   									keyRead5();		
+															break;
+											
+												case 5:
+															SendByte_74HC595(0x00);
+//															NewCount2=count2;
+															OD0=1;
+															OD1=1;
+															OD2=0;
+															delay(50);
+//														keyRead9();
+//												    keyRead3();
+															break; 
+
+												case 6:
+															if(Led2)
+															{
+																SendByte_74HC595(0x02);
+																OD0=0;
+																OD1=1;
+																OD2=1;
+															}
+															if(Led2==0)
+															{
+																SendByte_74HC595(0x00);
+																OD0=0;
+																OD1=1;
+																OD2=1;									
+															}
+															break;	
+
+                      case 7:
+                            if(Led4)
+														{
+														SendByte_74HC595(0x04);
+														OD0=0;
+														OD1=1;
+														OD2=1;
+														}		
+														if(Led4==0)
+														{
+														SendByte_74HC595(0x00);
+														OD0=0;
+														OD1=1;
+														OD2=1;														
+														}
+												break;		
+
+												case 8:
+															if(Led8)
+															{
+															SendByte_74HC595(0x08);
+															OD0=0;
+															OD1=1;
+															OD2=1;
+															}		
+															if(Led8==0)
+															{
+															SendByte_74HC595(0x00);
+															OD0=0;
+															OD1=1;
+															OD2=1;														
+															}
+													break;														
+													 }
+												 }
+												 	
+												}
+												   CurrentCount=CurrentTemp;
+                           
+											  }
+											else
+											{
+											 DisplayToggleD=0;
+											}										
+//************************SHOW TEMP IN CURRENT CASE*************************	
+							      
+
+							        if(ChInputAct6 == 1 || ChInputAct7 == 1)
+											{       
+												     FlagSepToShowTemp=1;
+													  CurrentCount=Setcount;//   call count
+												    
+														TimerForP1++;
+														if(TimerForP1 > 3000)
+														{
+														  
+															ChInputAct7 = 0;
+															ChInputAct6 = 0;
+														  TimerForP1=0;
+															FlagSepToShowTemp=0;
+														MainMenu=Open_Case;
+														}
+										  
+										  }
+//******************LED TOGGLE***********************************************
+	                       if(Input5 == 1)
+													{      
+														if(Togg)
+														{
+															DisplayToggleD=0;
+															DelayToggle1=0;
+														  LowToggle=0;
+															DelayToggle++;
+															if(DelayToggle > 3000)
+															{
+															Togg=0;
+															}
+														}
+														else
+														{
+															DelayToggle=0;
+														      LowToggle=1;
+																  PowFlag =1;
+													        Minuscount=SetTim;
+																  TimerNew=1;
+																	
+																	FlagT = 0;
+																	count2 = SetTim;
+															DelayToggle1++;
+															if(DelayToggle1 > 3000)
+															{
+                                Togg=1;
+																CompFlag=1;
+															}
+														}
+
+													}
+													else
+													{	
+													BlinkFor=0;
+													}
+							            CurrentCount=CurrentTemp;
+
+//*******************set timer********************************
+													if(SetButton==0)
+													{
+													if(ChInputAct5==1)
+													 {
+															PowFlag =1;
+															Minuscount=SetTim;
+															TimerNew=1;
+															CompFlag=1;
+															FlagT = 0;
+															count2 = SetTim;												 
+													 } 
+													}
+                   													
+
+//**************DECREMENT COUNT AFTER ECH MINUTES****************************														
+                 	if(TotalCount == 60000)	
+									 {
+									  count2--;
+										Minuscount=count2;
+										TotalCount=0;
+									 }
+	 
+//********************SHOW TIMER IN CURRENT CASE*******************************			
+									 
+				
+											if(ChInputAct8 == 1 || ChInputAct9 == 1)
+													{
+														
+														Led10=1;
+													  count2=SetTim;  //   call count
+														TimerForP2++;
+														if(TimerForP2 > 3000)
+														{
+														if(CompFlag)
+														{
+															count2=Newcount2;
+														}
+                            if(CompFlag==0)
+														{
+														count2=0x00;
+														}															
+															Led10=0;
+															ChInputAct8=0;
+															ChInputAct9=0;
+														  TimerForP2=0;
+//															count2=0x00;
+														MainMenu=Open_Case;
+														}
+													}
+						
+									
+//**************************BLINK SET COUNT 	DISPLAY AND EDIT***************************			
+                   								
+										 if((Input6 == 1)  &&  (Input7 == 1))
+												 {
+													 if((Input6 == 0)  &&  (Input7 == 0))
+													 {
+													 Temptimer=0;
+													 }
+													 Temptimer++;
+													 if(Temptimer > 4000)
+													 {
+														
+														 FlagForOpen=0;
+														 FlagForCurrent=0;
+														 Temptimer=0;
+														 MainMenu=Toggle_caseUO;
+														 FlagForToggleDis1=1;
+//														 FlagForToggleDis2=0;
+													 }
+												 }
+
+//************************BLINK SET TIMER DISPLY AND EDIT	**************************
+											if((Input8 == 1)  &&  (Input9 == 1))
+												 {
+													 if((Input8 == 0)  &&  (Input9 == 0))
+													 {
+													 CloTimer=0;
+													 }
+													 CloTimer++;
+													 if(CloTimer > 4000)
+													 {
+											
+														 FlagForCurrent=0;
+														 CloTimer=0;
+													if(CurrentTemp <  0x2BC)
+													 {
+//                              SetTim=NewCount;
+																MainMenu=Toggle_caseDC;
+																FlagForToggleDis22=1;
+																FlagForToggleDis2=0;
+														 }
+														 else
+														 {
+																MainMenu=Toggle_caseDO;
+																FlagForToggleDis2=1;
+																FlagForToggleDis22=0;
+														 }
+													 }
+												 }			
+							   }
+										
+
+									if(FlagSepToShowTemp)
+									{
+							  FlagForOpen=0;
+								FlagForTemp=0;
+								FlagForCurrent=0;
+						
+								FlagFortimer=1;
+								ShowTemp++;
+								if(ShowTemp > 10)
+								{
+								 ShowTemp = 0;
+								}
+									OD0=1;
+									OD1=1;
+									OD2=1;								
+								switch(ShowTemp)
+								{
+								 	case 0:
+//										Current=1;
+									SendByte_74HC595(seg[Setcount%10]);
+									OD0=0;
+									OD1=1;
+									OD2=0;
+									delay(50);
+									keyRead4();
+									keyRead8();
+									break;
+								
+						case 1:
+									SendByte_74HC595(seg[(Setcount/10)%10]);
+//										NewCount=count2;
+									OD0=1;
+									OD1=0;
+									OD2=0;
+									delay(50);	
+//								keyRead5();	
+                  keyRead7();						
+									break;
+								
+						case 2:
+									SendByte_74HC595(seg[(Setcount/100)%10]);
+//									  NewCount2=count2;
+									OD0=0;
+									OD1=0;
+									OD2=0;
+									delay(50);
+								  keyRead6();
+//								keyRead9();
+									break;
+								 
+						case 3:
+									SendByte_74HC595(seg[count2%10]);
+									OD0=1;
+									OD1=0;
+									OD2=1;
+									delay(50);
+//			            keyRead4();
+									break;
+						
+						case 4:
+									SendByte_74HC595(seg[(count2/10)%10]);
+//									NewCount=count2;
+									OD0=0;
+									OD1=0;
+									OD2=1;
+									delay(50);	
+//								keyRead5();		
+									break;
+					
+						case 5:
+									SendByte_74HC595(seg[(count2/100)%10]);
+//									NewCount2=count2;
+									OD0=1;
+									OD1=1;
+									OD2=0;
+									delay(50);
+									keyRead9();
+//									keyRead3();
+									break;
+						
+						case 6:
+							    if(Led2)
+									{
+										SendByte_74HC595(0x02);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+									}
+									if(Led2==0)
+									{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;									
+									}
+									break;
+						case 7:
+									  if(Led10)
+									{
+										SendByte_74HC595(0x10);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+									}
+									if(Led10==0)
+									{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;									
+									}
+							break;
+
+							case 8:
+										if(Led20)
+										{
+										SendByte_74HC595(0x20);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}
+										if(Led20==0)
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;									
+										}														
+										break;
+										
+							case 9:
+										if(Led4)
+										{
+										SendByte_74HC595(0x04);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}		
+										if(Led4==0)
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;														
+										}
+								break;	
+
+							case 10:
+										if(Led8)
+										{
+										SendByte_74HC595(0x08);
+										OD0=0;
+										OD1=1;
+										OD2=1;
+										}		
+										if(Led8==0)
+										{
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=1;														
+										}
+								break;										
+									
+								}
+//***********************SHOW SET TEMP*****************************								
+								 if(ChInputAct6 == 1 || ChInputAct7 == 1)
+											{ 
+													  Setcount=Setcount;//   call count
+												    Led2=1;
+														TimerForP1++;
+														if(TimerForP1 > 4000)
+														{
+															Led2=0;
+															ChInputAct7 = 0;
+															ChInputAct6 = 0;
+														  TimerForP1=0;
+															FlagSepToShowTemp=0;
+														  MainMenu=Open_Case;
+														}
+											}
+
+//**********************SHOW SET TIMER********************************											
+								
+											if(ChInputAct8 == 1 || ChInputAct9 == 1)
+													{
+													  count2=SetTim;  //   call count
+														Led10=1;
+														TimerForP2++;
+														if(TimerForP2 > 3000)
+														{
+															Led10=0;
+															ChInputAct8=0;
+															ChInputAct9=0;
+														  TimerForP2=0;
+															count2=0x00;
+														MainMenu=Open_Case;
+														}
+													}
+									
+											
+							}    							
+									
+} 
+				
+void ShowVersion (void)
+{
+               
+								   Vers++;
+									if(Vers > 5)
+									{
+									  Vers=0;
+									}
+											OD0=1;
+											OD1=1;
+											OD2=1;									
+									switch(Vers)
+									{
+									case 0:
+											SendByte_74HC595(0x38);
+											OD0=0;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											break;
+										
+							  case 1:
+											SendByte_74HC595(0x39);
+											OD0=1;
+											OD1=0;
+											OD2=0;
+											delay(50);								
+											break;
+										
+								case 2:
+											SendByte_74HC595(0x77);
+											OD0=0;
+											OD1=0;
+											OD2=0;
+											delay(50);
+											break;
+										 
+							  case 3:
+									    SendByte_74HC595(0x4F);
+											OD0=1;
+											OD1=0;
+											OD2=1;
+											delay(50);
+
+											break;
+								
+					      case 4:
+											SendByte_74HC595(0x3F);
+											OD0=0;
+											OD1=0;
+											OD2=1;
+											delay(50);		
+											break;
+							
+					      case 5:
+											SendByte_74HC595(0x5B);
+											OD0=1;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											break;
+									}
+									VersionTim++;
+                if(VersionTim > 4000)
+								{
+									TimerS=2;
+									VersionTim=0;
+								}
+}
+
+void DisplayCalU (void)
+	{
+		static unsigned short TiCoforU = 0;
+		static unsigned short TiC = 0;
+    CurrentTempU=(600*(ReadingAvg-127))/1044;
+		TimerCalU++;
+		if(TimerCalU < 500)
+		{
+		 if(TimerCalU < 250)
+		 {
+		   
+			  CalU++;
+				if(CalU > 5 )
+				{
+					CalU = 0;
+				}
+					OD0=1;
+					OD1=1;
+					OD2=1;
+
+				switch(CalU)
+				{
+					case 0:
+							SendByte_74HC595(seg[MinCount%10]);
+							OD0=0;
+							OD1=1;
+							OD2=0;
+					    delay(50);
+							break;
+							
+					case 1:
+							SendByte_74HC595(seg[(MinCount/10)%10]);
+							OD0=1;
+							OD1=0;
+							OD2=0;
+					    delay(50);
+							break;
+					
+					case 2:
+							SendByte_74HC595(seg[(MinCount/100)%10]);
+					    
+							OD0=0;
+							OD1=0;
+							OD2=0;
+					    delay(50);
+							break;
+					
+					case 3:
+							SendByte_74HC595(0x38);
+							OD0=1;
+							OD1=0;
+							OD2=1;
+					    delay(50);
+							break;
+						
+					case 4:
+							SendByte_74HC595(0x77);
+							OD0=0;
+							OD1=0;
+							OD2=1;
+			        delay(50);	
+							break;
+					
+					case 5:
+							SendByte_74HC595(0x39);
+							OD0=1;
+							OD1=1;
+							OD2=0;
+					    delay(50);
+							break;
+						}
+				     if(StopToggle1 == 0)
+						 {
+						 TimerCalU=0;
+						 }
+
+				 }
+				 else
+				 {
+					 if(StopToggle1)
+					 {
+								CalU1++;
+							if(CalU1 > 5 )
+							{
+								CalU1 = 0;
+							}
+								OD0=1;
+								OD1=1;
+								OD2=1;
+
+							switch(CalU1)
+							{
+								case 0:
+										SendByte_74HC595(0x00);
+										OD0=0;
+										OD1=1;
+										OD2=0;
+										delay(50);
+										break;
+										
+								case 1:
+										SendByte_74HC595(0x00);
+										OD0=1;
+										OD1=0;
+										OD2=0;
+										delay(50);
+										break;
+								
+								case 2:
+										SendByte_74HC595(0x00);
+										
+										OD0=0;
+										OD1=0;
+										OD2=0;
+										delay(50);
+										break;
+								
+								case 3:
+										SendByte_74HC595(0x38);
+										OD0=1;
+										OD1=0;
+										OD2=1;
+										delay(50);
+										break;
+									
+								case 4:
+										SendByte_74HC595(0x77);
+										OD0=0;
+										OD1=0;
+										OD2=1;
+										delay(50);	
+										break;
+								
+								case 5:
+										SendByte_74HC595(0x39);
+										OD0=1;
+										OD1=1;
+										OD2=0;
+										delay(50);
+										break;
+									}
+								}
+							 }
+							}
+		          else
+							{
+							TimerCalU=0;
+							}
+		
+	    
+				
+				
+        
+				
+				if(Flag1)
+				 {
+					
+					 MinCount=0;
+					 Flag11=1;
+				 }
+				 if(Flag11)
+				 {
+					 Flag1=0;
+					 							
+              
+					  
+					 if(CurrentTempU==0)
+					 {
+						 StopToggle1=0;
+						 TiCoforU++;
+						 if(TiCoforU > 250)
+							  {
+								 TiCoforU=0;
+							 
+									 if(MinCount >= 64)
+									 {
+										
+										 MinCount=0;
+										 
+										
+							      Flag11 = 0;
+										
+										
+						    
+									 }
+									 else
+									 {
+										 MinCount++;
+									 }
+							  }	
+														 
+					 }
+					 else
+					 {
+					  StopToggle1=1;
+					 }
+					 
+				 }
+				 else
+				 {
+				 		TiC++;
+								if(TiC >= 4000)
+								{
+//									MinCount=0;
+										Flag2 = 1;
+										Flag11 = 0;
+										TimerS =1;
+						    }
+				 }
+				
+		
+			
+	}
+
+void DisplayCalD (void)
+ {
+     	
+	 static unsigned short TiCoforD = 0;
+	 static unsigned short TiC1 = 0;
+//	 static unsigned short For0 = 0;
+	 
+					 CurrentTempD=(600*(ReadingAvg-127))/1044;
+						TimerCalD++;
+					 if(TimerCalD < 500)
+					 {
+						 if(TimerCalD < 250)
+						 {
+						   CalD++;
+							if(CalD > 5 )
+							{
+								CalD =0;			
+							}
+									OD0=1;
+									OD1=1;
+									OD2=1;
+
+								switch(CalD)
+								{
+									case 0:
+											SendByte_74HC595(seg[MaxCount%10]);
+											OD0=0;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											break;
+								
+									case 1:
+											SendByte_74HC595(seg[(MaxCount/10)%10]);
+											OD0=1;
+											OD1=0;
+											OD2=0;
+											delay(50);
+											break;
+									
+									case 2:
+											SendByte_74HC595(seg[(MaxCount/100)%10]);
+											OD0=0;
+											OD1=0;
+											OD2=0;
+											delay(50);
+											break;
+									
+									case 3:
+											SendByte_74HC595(0x38);
+											OD0=1;
+											OD1=0;
+											OD2=1;
+											delay(50);
+											break;
+										
+									case 4:
+											SendByte_74HC595(0x77);
+											OD0=0;
+											OD1=0;
+											OD2=1;
+											delay(50);	
+											break;
+									
+									case 5:
+											SendByte_74HC595(0x39);
+											OD0=1;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											break;
+								}
+											   if(StopToggle2 == 0)
+												 {
+												 TimerCalD=0;
+												 }
+						 }
+						 else
+						 {
+							 if(StopToggle2)
+							 {
+						  CalD1++;
+							if(CalD1 > 5 )
+							{
+								CalD1 =0;			
+							}
+									OD0=1;
+									OD1=1;
+									OD2=1;
+
+								switch(CalD1)
+								{
+									case 0:
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											break;
+								
+									case 1:
+											SendByte_74HC595(0x00);
+											OD0=1;
+											OD1=0;
+											OD2=0;
+											delay(50);
+											break;
+									
+									case 2:
+											SendByte_74HC595(0x00);
+											OD0=0;
+											OD1=0;
+											OD2=0;
+											delay(50);
+											break;
+									
+									case 3:
+											SendByte_74HC595(0x38);
+											OD0=1;
+											OD1=0;
+											OD2=1;
+											delay(50);
+											break;
+										
+									case 4:
+											SendByte_74HC595(0x77);
+											OD0=0;
+											OD1=0;
+											OD2=1;
+											delay(50);	
+											break;
+									
+									case 5:
+											SendByte_74HC595(0x39);
+											OD0=1;
+											OD1=1;
+											OD2=0;
+											delay(50);
+											break;
+								}
+							}
+						 }
+					 }
+					 else
+					 {
+					 TimerCalD=0;
+					 }
+
+				
+				
+		       if(Flag2)
+					 {
+					   MaxCount=300;
+						 Flag22=1;
+             
+					 }
+             
+					 if(Flag22)
+					 {
+						
+					   Flag2=0;
+						 
+						 if(CurrentTempD == 0x012B || CurrentTempD == 0x012C)
+						 { 
+							 StopToggle2=0;
+							 if(FlagD == 0)
+							 {
+							 MaxCount=0;
+								 FlagD=1;
+							 }
+							 
+						    TiCoforD++;
+							 if(TiCoforD > 250)
+							 {
+							   TiCoforD=0;
+								 if(MaxCount>=64)
+								  {
+								   MaxCount=0;
+									 Flag22=0;
+								  }
+								 else
+									{
+									 MaxCount++;
+									}
+							 }
+						 
+						 }
+						 else
+						 {
+						 StopToggle2=1;
+						 }
+					 }
+					 else
+					 {
+					   TiC1++;
+						 if(TiC1 > 4000)
+						 {
+							 FlagForC=0;
+						   Flag22=0;
+							 MainMenu=Open_Case;
+							 TimerS=2;
+						 }
+					 }
+			
+ }
+ 
+
+
+
+		
+
+
+
+void SendByte_74HC595(unsigned char byte)//void SerialToParallel(unsigned char byte)
+{
+	unsigned short nobit = 8,Data = byte;
+	DCK(LOW);
+
+		do
+		{
+			  
+				if(Data & 0x80)
+				{
+					DDT(HIGH);		
+				}
+				else
+				{
+					DDT(LOW);
+				}
+			  Data = Data << 1;
+        delay(5);
+			  DCK(HIGH);
+			  delay(5);
+			  DCK(LOW);
+		}
+		while(--nobit);
+	
+	delay(5); 	
+	DLT(HIGH);
+	delay(5);
+	DLT(LOW);
+	delay(50);
+	DDT(LOW);    
+}
+void delay(unsigned long dly)
+{
+	while(--dly);
+} 
+void keyRead9 (void)
+{
+    static unsigned char oldInput9;
+    if(KeyRead == 0)
+    {
+        Input9=1;
+    }
+    else
+    {
+        Input9=0;
+    }
+    InputCh9=( Input9 ^ oldInput9) & Input9;
+    oldInput9 =Input9;
+		
+    if( InputCh9)
+    {
+			ChInputAct9 =1;
+    }
+}
+void keyRead8 (void)
+{
+    static unsigned char oldInput8;
+    if(KeyRead == 0)
+    {
+        Input8=1;
+    }
+    else
+    {
+        Input8=0;
+    }
+    InputCh8=( Input8 ^ oldInput8) & Input8;
+    oldInput8 =Input8;
+		
+    if( InputCh8)
+    {
+			ChInputAct8 =1;
+    }
+}
+
+void keyRead7 (void)
+{
+    static unsigned char oldInput7;
+    if(KeyRead == 0)
+    {
+        Input7=1;
+    }
+    else
+    {
+        Input7=0;
+    }
+    InputCh7=( Input7 ^ oldInput7) & Input7;
+    oldInput7 =Input7;
+		
+    if( InputCh7)
+    {
+			ChInputAct7 =1;
+    }
+}
+
+void keyRead6 (void)
+{
+    static unsigned char oldInput6;
+    if(KeyRead == 0)
+    {
+        Input6=1;
+    }
+    else
+    {
+        Input6=0;
+    }
+    InputCh6=( Input6 ^ oldInput6) & Input6;
+    oldInput6 =Input6;
+		
+    if( InputCh6)
+    {
+			ChInputAct6 =1;
+    }
+}
+
+void keyRead1 (void)
+{
+    static unsigned char oldInput1;
+    if(KeyRead == 0)
+    {
+        Input1=1;
+    }
+    else
+    {
+        Input1=0;
+    }
+    InputCh1=( Input1 ^ oldInput1) & Input1;
+    oldInput1 =Input1;
+		
+    if( InputCh1)
+    {
+//			ChInputAct1 =1;
+//			count1++;
+			if(Setcount > 0 && Setcount < 400)
+			{
+			Setcount++;
+			}
+			FlagKey1=1;
+//			EE_wrt( 0x50, (unsigned char*)&count1,sizeof(count1));
+			
+		 	
+    }
+}
+
+void keyRead2 (void)
+{
+    static unsigned char oldInput2;
+    if(KeyRead == 0)
+    {
+        Input2=1;
+    }
+    else
+    {
+        Input2=0;
+    }
+    InputCh2=( Input2 ^ oldInput2) & Input2;
+    oldInput2 =Input2;
+		
+    if(InputCh2)
+    {
+//			ChInputAct2 =1;
+			if(Setcount > 0 && Setcount < 400)
+			{
+//			 count1--;
+			Setcount--;
+//		  EE_wrt( 0x50, (unsigned char*)&count1,sizeof(count1));
+				
+			}
+    }
+}
+
+
+
+void keyRead3 (void)
+{
+    static unsigned char oldInput3;
+    if(KeyRead == 0)
+    {
+        Input3=1;
+    }
+    else
+    {
+        Input3=0;
+    }
+    InputCh3=( Input3 ^ oldInput3) & Input3;
+    oldInput3 =Input3;
+		
+    if( InputCh3)
+    {
+//		ChInputAct3=1;
+			if(SetTim > 0 && SetTim < 999)
+			{
+//		count2++;
+			SetTim++;
+			}
+    }
+}
+
+void keyRead4 (void)
+{
+    static unsigned char oldInput4;
+    if(KeyRead == 0)
+    {
+        Input4=1;
+    }
+    else
+    {
+        Input4=0;
+    }
+    InputCh4=( Input4 ^ oldInput4) & Input4;
+    oldInput4 =Input4;
+		
+    if( InputCh4)
+    {
+//			ChInputAct4 =1;
+			if(SetTim > 0 && SetTim < 999)
+			{
+//			count2--;				
+				SetTim--;
+			}
+    }
+}
+
+void keyRead5 (void)
+{
+    static unsigned char oldInput5;
+	 
+    if(KeyRead == 0)
+    {
+        Input5=1;
+		  }
+    else
+    {
+        Input5=0;
+    }
+    InputCh5=( Input5 ^ oldInput5) & Input5;
+    oldInput5 =Input5;
+		
+    if( InputCh5)
+    {
+			ChInputAct5 = 1;
+			FlagForCurrent=0;		
+		  SetFlag1=1;
+			SetFlag21=1;
+			
+//				EE_wrt( 0xAB, (unsigned char*)&SetFlag21,sizeof(SetFlag21));
+//	   	EE_wrt( 0x10, (unsigned char*)&SetFlag1,sizeof(SetFlag1));
+			
+    }
+		
+}
+
+
+
+
+
+void EINT0_IRQHandler (void)
+{
+	if(MYP3_ISRC & 0x00000004)
+	{
+		MYP3_ISRC |= 0x00000004;			//clear interrupt source flag.
+	}
+}
+
+
+void TMR0_IRQHandler (void)
+{
+	MYTISR0  = 1;				//WILL CLEAR PREVIOUS INT STATUS
+	Ti1msRefresh = 1;
+}
+
+void Read_Adc(void)
+{
+	MYADCR |= 0x00000800;    // start Conversion
+	
+	while(!(MYADSR & 0x0000001)) 
+	{
+		
+	}
+	
+	if(MYADSR & 0x0000001)	// if Conversion  done
+	{
+		MYADSR |= 0x00000001;     // Clear conversion flag
+		MYADCR &= (~0x00000800);  // Stop Conversion
+		if(MYADDR1 & 0x00020000)   //check for valid data
+		{
+			AdcReading = MYADDR1 & 0x00000FFF;    //get valid data
+						
+			AccumulateCo+= AdcReading;
+			SampleCo++;
+			if(SampleCo >= 64)
+			{
+				SampleCo = 0;	
+				ReadingAvg = (AccumulateCo /64);
+				AccumulateCo=0;
+			}
+		}
+	}
+}
+
+
+	
+
+
+
+
+

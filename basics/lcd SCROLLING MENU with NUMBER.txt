@@ -1,0 +1,493 @@
+//====================================================================================
+//                              EMBROIDERY
+//      VERSON  :   VERSON V01
+//      DATE    :   28TH FEB 2015
+//      CARD    :   IW145-STO-DSP
+//      REQ     :
+//
+//====================================================================================
+#include <stdio.h>
+#include "M0518.h"
+#include "REFRENCE_M0518.H"
+#include "struct_def.h"
+#include "gpio.h"
+#include "clocksource.h"
+#include "timer.h"
+#include "AT24C04.h"
+#include "adc.h"
+
+void jqfKeyAction(void);
+void jqfKeyAction1(void);
+void jqfPrint (void);
+void jqfTimeAct(void);
+void LcdInit(void);
+void LcdCdPage ( const uchar * , uchar , uchar );
+void LcdWrtCmd  (uchar);
+void LcdBusyCh  (uint);
+void LcdBcd     (uchar);
+void LcdBcdCh   (uchar);
+void LcdWrtDt   (uchar);
+
+
+uint32_t  Delay = 0x00050000;
+uint8_t TestFlag;
+uint8_t count;
+uint16_t pwrOnTimer =0;
+typedef enum JcqMenuId
+{
+    JQ_PwrOn ,
+    JQ_RunRpm,
+    Jq_SetRpm,
+	  JQ_contacts,
+    JQ_play_store,
+    JQ_messages,
+    JQ_clock,	
+}JMid;
+
+unsigned short AdcTempCo;
+unsigned int TEST_tI;
+
+extern unsigned char ms1_TimerRefresh;
+
+unsigned char Dij[4], RdSetRPM[4];
+unsigned short RdRPM;
+unsigned char TimeSCo;
+unsigned char jchMenu;
+unsigned char jchMenu1;
+unsigned char jflgDspRef;
+unsigned char jflgStart;
+unsigned char jflgNewRpm;
+
+unsigned short jshSetRpm;
+unsigned char jshAddCo;
+
+unsigned short jloRpmCo;
+
+ULongIntChar Temp;
+
+uchar  Key;
+uchar  Esc;
+uchar  AUp;
+uchar  ADn;
+uchar  Enter;
+
+uchar KeyCh;
+uchar ChEsc;
+uchar ChAUp;
+uchar ChADn;
+uchar ChEnter;
+uchar Filter[3];
+uchar KeyNo;
+uchar KeyOld;
+uchar KeyTemp;
+
+void KeyRead (void)
+{
+//	KeyTemp = P3;
+    KeyTemp = 0;
+    if(KEY1 == 0){KeyTemp |= 0X01;}
+    if(KEY2 == 0){KeyTemp |= 0X02;}
+    if(KEY3 == 0){KeyTemp |= 0X04;}
+    if(KEY4 == 0){KeyTemp |= 0X08;}
+    KeyNo++;
+    if(KeyNo >= 3){KeyNo = 0;}
+    Filter[KeyNo] = KeyTemp;//KEY FILTER
+    Key = ((Filter[0] | Filter[1] | Filter[2]) & ((Filter[0] & Filter[1] & Filter[2]) | Key));
+    KeyCh = (Key ^ KeyOld) & Key;
+    KeyOld= Key;
+    KeyTemp = 0;
+    if(Key & 0x01){Esc  = 1;}else{Esc  = 0;}
+    if(Key & 0x02){AUp  = 1;}else{AUp  = 0;}
+    if(Key & 0x04){ADn  = 1;}else{ADn  = 0;}
+    if(Key & 0x08){Enter= 1;}else{Enter= 0;}
+    if(KeyCh & 0x01){ChEsc  = 1;}else{ChEsc  = 0;}
+    if(KeyCh & 0x02){ChAUp  = 1;}else{ChAUp  = 0;}
+    if(KeyCh & 0x04){ChADn  = 1;}else{ChADn  = 0;}
+    if(KeyCh & 0x08){ChEnter= 1;}else{ChEnter= 0;}
+}
+
+
+void HexToBcdI(void)
+{   Temp.I[I1] = (Temp.I[I1]%10)+
+        (((Temp.I[I1]%100)/10)*0x10)+
+        (((Temp.I[I1]%1000)/100)*0x100)+
+        (((Temp.I[I1]%10000)/1000)*0x1000);
+}
+
+
+int main (void)
+{
+    GPIO_Init();
+    while(Delay--); // DELAY  ABOUT 100MSEC DELY AT 22MHZ
+    GPIO_Init();
+    CLKSRC_Select();// CRYSTAL 12MHZ  CPU WILL RUN FROM PLL AT 48MHZ
+    TIMER_Init();
+    LcdInit();
+
+    EEP_WP = 0; //EPROM WRITE PROECT DISABLE
+
+    jflgDspRef = 1;
+    jchMenu = JQ_PwrOn;
+
+//    EE_rd(0x50, RdSetRPM, 4);
+//    RdRPM = RdSetRPM[3]*1000+RdSetRPM[2]*100+RdSetRPM[1]*10+RdSetRPM[0]*1;
+//    jshSetRpm = RdRPM;
+
+//    jflgNewRpm = 1;
+	
+	
+
+
+
+    while(1)
+    {
+        if(ms1_TimerRefresh == 1)//1ms
+        {
+            ms1_TimerRefresh = 0;
+            TimeSCo++;
+            if(TimeSCo > 5)
+            {
+                TimeSCo = 0;
+            }
+            switch(TimeSCo)
+            {
+                case 0:
+                    KeyRead();
+                    break;
+                case 1:
+                    if(Key || KeyCh)
+                    {
+											if(ChEnter || ChADn)
+											{
+												 jflgDspRef = 1;
+                        jqfKeyAction();
+											}
+											else
+											{
+												if(ChAUp)
+												{
+												jflgDspRef = 1;
+                        jqfKeyAction1();
+												}
+											}
+                    }
+                    break;
+                case 2:
+                    if(jflgDspRef)
+                    {
+                        jflgDspRef = 0;
+                        jqfPrint();
+                    }
+                    break;
+                case 3:
+                    jqfTimeAct();
+                    break;
+                case 4:
+
+                    break;
+            }
+        }
+
+    }
+}
+
+void jqfKeyAction(void)
+{
+    switch(jchMenu)
+      {
+        case  JQ_PwrOn :
+            break;
+				
+				case JQ_contacts:
+				      {
+						  if(ChEnter || ChADn)
+						     {
+									jchMenu1 = JQ_contacts;
+									LcdWrtCmd(0x80);  
+									jchMenu = JQ_play_store;
+									LcdWrtCmd(0x0C);  
+						     }
+					    }
+						  break;
+				case JQ_play_store:
+				      {
+						  if(ChEnter || ChADn)
+						     {
+										jchMenu1 = JQ_play_store;
+										LcdWrtCmd(0x80);
+										jchMenu = JQ_messages;
+										LcdWrtCmd(0x0C);
+						     }
+					    }
+						  break;
+			  case JQ_messages:
+				      {
+						 if(ChEnter || ChADn)
+						    {
+									jchMenu1 = JQ_messages;
+									LcdWrtCmd(0x80);
+									jchMenu = JQ_clock;
+									LcdWrtCmd(0x0C);
+						    }
+					    }
+						  break;
+				case JQ_clock:
+				      {
+						 if(ChEnter || ChADn)
+						    {
+									jchMenu1 = JQ_clock;
+									LcdWrtCmd(0x80);
+									jchMenu = JQ_contacts;
+									LcdWrtCmd(0x0C);
+						    }
+					    }
+					   break;
+					
+    }
+}
+void jqfKeyAction1(void)
+{
+    switch(jchMenu)
+      {
+       
+				
+				case JQ_contacts:
+				      {
+						  if(ChAUp)
+						     {
+									jchMenu1 = JQ_messages;
+									LcdWrtCmd(0x80);  
+									jchMenu = JQ_clock;
+									LcdWrtCmd(0x0C);  
+						     }
+					    }
+						  break;
+				case JQ_play_store:
+				      {
+						  if(ChAUp)
+						     {
+										jchMenu1 = JQ_clock;
+										LcdWrtCmd(0x80);
+										jchMenu = JQ_contacts;
+										LcdWrtCmd(0x0C);
+						     }
+					    }
+						  break;
+			  case JQ_messages:
+				      {
+						 if(ChAUp)
+						    {
+									jchMenu1 = JQ_contacts;
+									LcdWrtCmd(0x80);
+									jchMenu = JQ_play_store;
+									LcdWrtCmd(0x0C);
+						    }
+					    }
+						  break;
+				case JQ_clock:
+				      {
+						 if(ChAUp)
+						    {
+									jchMenu1 = JQ_play_store;
+									LcdWrtCmd(0x80);
+									jchMenu = JQ_messages;
+									LcdWrtCmd(0x0C);
+						    }
+					    }
+					   break;
+					
+    }
+}
+
+
+void jqfPrint(void)
+{
+    switch(jchMenu)
+    {
+        case  JQ_PwrOn :
+            //        "0123456789ABCDEF"
+            LcdCdPage("    PHONE               ",16,0x80);
+            LcdCdPage("    MENU                ",16,0xC0);
+            break;
+				
+
+			  case   JQ_contacts:
+					  LcdCdPage("4-> CLOCK:                     ",16,0x80);
+						LcdCdPage("1-> CONTACTS:              ",16,0xC0);
+						LcdWrtCmd(0xC9);
+
+            break;	
+				
+				case   JQ_play_store:
+				  	LcdCdPage("                       ",16,0x80);
+						LcdCdPage("2-> PLAY_STORE:           ",16,0xC0);
+						LcdWrtCmd(0xC9);
+				    break;
+				
+				case   JQ_messages:
+				  	LcdCdPage("                        ",16,0x80);
+						LcdCdPage("3-> MESSAGES:              ",16,0xC0);
+						LcdWrtCmd(0xC9);
+            break;
+				
+				
+				
+				case   JQ_clock:
+					  LcdCdPage("                        ",16,0x80);
+						LcdCdPage("4-> CLOCK:                 ",16,0xC0);
+						LcdWrtCmd(0xC9);
+            break;		 
+    }
+		
+		 switch(jchMenu1)
+    {
+			  case   JQ_contacts:
+				   	LcdCdPage("1-> CONTACTS:               ",16,0x80);
+						LcdWrtCmd(0x80);
+
+            break;	
+				
+				case   JQ_play_store:
+				  	LcdCdPage("2-> PLAY_STORE:          ",16,0x80);
+						LcdWrtCmd(0x80);
+				    break;
+				
+				case   JQ_messages:
+				  	LcdCdPage("3-> MESSAGES:              ",16,0x80);
+						LcdWrtCmd(0x80);
+            break;
+				
+				
+				
+				case   JQ_clock:
+					  LcdCdPage("4-> CLOCK:                ",16,0x80);
+						LcdWrtCmd(0x80);
+            break;		 
+    }
+}
+
+ void jqfTimeAct(void)//5ms
+{
+    static unsigned short TiCo = 0;
+//    static unsigned char ToggleFlg = 0;
+    switch(jchMenu)
+    {
+        case  JQ_PwrOn :
+                TiCo++;
+                if(TiCo > 500) 
+                {
+										TiCo = 0;
+										jchMenu = JQ_contacts;
+										jflgDspRef = 1;
+                }
+              break;
+				case  JQ_contacts:
+				      break;
+
+				case  JQ_play_store:
+				      break;
+
+				case  JQ_messages:
+				      break;
+
+				case  JQ_clock:	
+				      break;
+    }
+}
+
+
+unsigned char jflgPu1;
+void TMR1_IRQHandler(void)
+{
+    MYTISR1  = 1; //WILL CLEAR PREVIOUS INT STATUS
+    if(jflgNewRpm)
+    {
+        jflgNewRpm = 0;
+        if(jshSetRpm != 0)
+        {
+            MYTCMPR1 = 60000000/(8*jshSetRpm);
+        }
+    }
+    if(jflgStart)
+    {
+        jflgPu1++;
+        if(jflgPu1 > 7)
+        {
+            jflgPu1 = 0;
+        }
+        switch(jflgPu1)
+        {
+            case 0:     //45
+              jqOP1 = 1;
+              jqOP2 = 0;
+              OP1 = 1;
+              OP2 = 0;
+              OP3   = 0;
+              OP4   = 0;
+              break;
+
+            case 1:     //90
+              jqOP1 = 1;
+              jqOP2 = 0;
+              OP1 = 1;
+              OP2 = 0;
+              OP3   = 0;
+              OP4   = 1;
+              break;
+
+            case 2:     //135
+              jqOP1 = 1;
+              jqOP2 = 1;
+              OP1 = 1;
+              OP2 = 1;
+              OP3   = 0;
+              OP4   = 1;
+              break;
+
+            case 3:     //180
+              jqOP1 = 0;
+              jqOP2 = 1;
+              OP1 = 0;
+              OP2 = 1;
+              OP3   = 0;
+              OP4   = 1;
+              break;
+
+            case 4:     //225
+              jqOP1 = 0;
+              jqOP2 = 1;
+              OP1 = 0;
+              OP2 = 1;
+              OP3   = 0;
+              OP4   = 0;
+              break;
+
+            case 5:     //270
+              jqOP1 = 0;
+              jqOP2 = 0;
+              OP1 = 0;
+              OP2 = 0;
+              OP3   = 0;
+              OP4   = 0;
+              break;
+
+            case 6:     //315
+              jqOP1 = 0;
+              jqOP2 = 0;
+              OP1 = 0;
+              OP2 = 0;
+              OP3   = 1;
+              OP4   = 0;
+              break;
+
+            case 7:     //360
+              jqOP1 = 0;
+              jqOP2 = 0;
+              OP1 = 0;
+              OP2 = 0;
+              OP3   = 0;
+              OP4   = 0;
+              break;
+        }
+    }
+}

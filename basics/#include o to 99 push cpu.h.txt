@@ -1,0 +1,394 @@
+#include "cpu.h"
+#include "INIT_MINI.h"
+#include "Mini51Series.h"
+#include "system_Mini51Series.h"
+#include "REFRENCE_MINI.h"
+#include "pwm.h"
+#include "fmc.h"
+#include "IspFlash.h"
+uint32_t  Delay = 0x000FFFFF;
+unsigned  char Input,InputCh,ChInputAct;
+#define HIGH		1
+#define LOW			0
+void segmrnt(void);
+void SendByte_74HC595(unsigned char byte);
+
+void delay(unsigned long dly);
+void keyRead (void);
+void Genreate_PWM(void);
+void stable_mode(void);
+void Change_mode(void);
+void DataFlash_Write_NotErase (unsigned char * Data, ulint Address , uint NoOfDword );
+void DataFlash_Read (unsigned char  * Data, ulint  Address , uint NoOfDword );
+void DataFlash_Erase (uchar PageNo);
+int set_data_flash_base(uint32_t u32DFBA);
+int data;
+void Display(void);
+unsigned char disflag,disupdate5ms=0; 
+uint8_t dno;
+int count=0;
+unsigned short ChModeTimer;
+unsigned short timer,fivesecond,FlickerTime,timer_10s;
+unsigned char toggleflg;
+unsigned char Countflick=0,Flickflg,mode;
+unsigned int Count,Count_lower;
+int byte;
+typedef struct {
+uint8_t Count;  
+uint8_t Count_lower;
+uint8_t inc_decimal;
+uint8_t pluse;    
+}seg_value;
+seg_value Segment={0};
+void displaydigit(int digit);
+uint8_t oldCount;
+unsigned short Timeref_1s = 0;
+unsigned short Timeref_2s = 0;
+unsigned char seg[10]={0x3F,0x06,0x5B,0x04F,0x66,0x6D,0x7d,0x07,0x7f,0x6F};
+
+unsigned char dno1;
+int main (void)
+{ 
+	OUT = 0;
+	do{;}while(Delay--);	
+	OUT = 0;
+	InitializeOCP();
+        
+	Segment.pluse=3;
+	set_data_flash_base(0x00000E00);
+	DataFlash_Read ((unsigned char *)&Segment,0x00000F00, sizeof(Segment));
+	if(Segment.Count>50)
+	{
+			Segment.Count=5;
+			Segment.Count_lower=5;
+			Segment.inc_decimal=0;
+	}
+	if(Segment.pluse > 6)
+	{
+			Segment.pluse = 3;
+	}
+ 
+//MinSens = 600;
+//MaxSens = 1400;
+	PowerOnFlg = 1;
+	PWM->PPR = 1 << PWM_PPR_CP23_Pos;
+	PWM->CSR = PWM_CLK_DIV_1 << PWM_CSR_CSR3_Pos | PWM_CLK_DIV_1 << PWM_CSR_CSR2_Pos;
+	PWM->PCR = PWM_PCR_CH3EN_Msk | PWM_PCR_CH3MOD_Msk;
+	PWM->CNR[3] = 256 ;
+	PWM->CMR[3] = ((Segment.Count*5)+4);//PWMCount[Count];//(PWM->CNR[3]*50)/100;//750 - 1;
+	PWM->POE = PWM_POE_PWM3_Msk;
+ 
+	 
+//unsigned char x;
+
+
+	SW =0x00;
+	count =0;
+	
+	while(1)
+	{
+		if(Ti1msRefresh)
+		{
+			
+			
+				//CALLED EVERY ONE MSEC
+			Ti1msRefresh =0;
+			dno1++;
+			if(dno1 > 1)
+			{
+				dno1 = 0;
+			}
+			switch(dno1)
+			{
+				case 0:
+					uDS1(0);
+					uDS2(0);
+					SendByte_74HC595(seg[count%10]);
+					uDS2(1);	
+					break;
+				case 1:
+					uDS1(0);
+					uDS2(0);
+					SendByte_74HC595(seg[(count/10)%10]);
+					uDS1(1);	
+					keyRead();
+					break;
+			}
+					if(ChInputAct==1)
+						 {
+						  ChInputAct = 0;
+						  Segment.Count++;
+						 }
+			
+			Timeref_1s++;
+			if(Timeref_1s > 1000)
+			{
+				Timeref_1s = 0;
+				
+					if(count  > 99)
+					    {
+					     count=0;
+					    }
+			   	}
+		}		
+		
+	}
+	
+	
+	
+}
+
+
+
+
+void EINT0_IRQHandler (void)
+{
+	if(MYP3_ISRC & 0x00000004)
+	{
+		MYP3_ISRC |= 0x00000004;			//clear interrupt source flag.
+	}
+}
+
+
+void TMR0_IRQHandler (void)
+{
+	MYTISR0  = 1;				//WILL CLEAR PREVIOUS INT STATUS
+	Ti1msRefresh = 1;
+}
+
+void TMR1_IRQHandler (void)
+{
+	MYTISR1  = 1;				//WILL CLEAR PREVIOUS INT STATUS
+}
+
+void ADC_IRQHandler (void)
+{
+	if(MYADSR & 0x00000001)
+	{	
+		MYADSR = 1;
+		ProxiCount = MYADDR0 & 0x000003FF;
+	}
+}
+void SendByte_74HC595(unsigned char byte)//void SerialToParallel(unsigned char byte)
+{
+	unsigned char nobit = 8,Bytes=1,Data;
+		
+	Data = byte;
+    uCLK(LOW);
+	
+	do
+	{
+		do
+		{
+			if(Data & 0x80)
+			{
+				uDATA(HIGH);
+			}
+			else
+			{
+				uDATA(LOW);
+			}
+			Data = Data << 1;
+            delay(5);
+			uCLK(HIGH);
+			delay(5);
+			uCLK(LOW);
+		}while(--nobit);
+		nobit = 8;
+	}while(--Bytes);
+    delay(5);
+    uCLK(HIGH);
+    delay(5);
+    uCLK(LOW);
+	delay(50);
+	uDATA(LOW);
+	
+}
+void delay(unsigned long dly)
+{
+	while(--dly);
+}
+
+void keyRead (void)
+{
+    static unsigned char oldInput;
+    if(SW==0)
+    {
+        Input=1;
+    }
+    else
+    {
+        Input=0;
+    }
+    InputCh=( Input ^ oldInput) & Input;
+    oldInput =Input;
+		
+    if( InputCh)
+    {
+			ChInputAct =1;
+			count++;
+    }
+}
+
+void Genreate_PWM(void)
+{         
+    PWM->CMR[3] = ((Segment.Count*5)+Segment.pluse);//PWMCount[Count];//(PWM->CNR[3]*50)/100;//750 - 1;
+    timer++;
+    FlickerTime++;
+    fivesecond++;
+    timer_10s++;
+    if(timer>180)
+    {
+        timer=0;
+        switch(mode)
+        {
+            case 0:               //stable mode
+               if(Input==1)
+                {
+                    
+                    FlickerTime=0;
+                    fivesecond=0;
+                    timer_10s=0;
+                    mode=1;
+                    disflag=0;          //On seven segment
+                }
+                if(timer_10s > 10000)
+                {
+                    timer_10s=0;
+                    FlickerTime=0;
+                    fivesecond=0;
+                    SendByte_74HC595(0x00);
+                    disflag=1;          //off seven segment
+                    uDS1(0);
+                    uDS2(0); 
+                }
+            
+            break;
+            case 1:
+                if(timer_10s > 10000)
+                {
+                    mode=0;
+                    timer_10s=0;
+                    FlickerTime=0;
+                    fivesecond=0;
+                    SendByte_74HC595(0x00);
+                    uDS1(0);
+                    uDS2(0);
+                }
+                if(Input==1)
+                {
+                   ChModeTimer++;
+                   if(ChModeTimer>25)
+                    {
+                       timer_10s=0;
+                       FlickerTime=0;
+                       fivesecond=0;
+                       ChModeTimer=0;
+                       Countflick=1;
+                       mode=2;
+                       ChInputAct =0;
+                    } 
+                }
+                break;
+            case 2:     //change mode 
+                if(Countflick==1)
+                {
+                    if(fivesecond>5000)
+                    {
+                        fivesecond=0;
+                        Countflick=0;
+                        mode=0;
+                        disflag=0;
+                        timer_10s=0;
+                        //Display();
+                        return;
+                    }
+                    if(FlickerTime>500)
+                    {
+                       FlickerTime=0;
+                    }
+                    if(FlickerTime>350)
+                    {
+                       Flickflg=1;                
+                    }
+                    else
+                    {
+                       Flickflg=0;
+                    }
+                    if(ChInputAct==1)
+                    {
+                        ChInputAct = 0;
+                        Segment.Count++;
+                        Segment.Count %= 51;
+                        Segment.Count_lower++;
+                        Segment.Count_lower %= 10;
+                        if(Segment.Count_lower == 0)
+                        {
+                            Segment.inc_decimal++;
+                        }
+                        else
+                        {
+                            if(Segment.Count_lower == 1 && Segment.inc_decimal == 5)
+                            {
+                                Segment.inc_decimal = 0;
+                                Segment.Count_lower = 0;
+                            }
+                            else if(Segment.Count_lower == 5 && Segment.inc_decimal == 2)
+                            {
+                                Segment.pluse = 5;
+                            }
+                            else if(Segment.Count_lower == 2 && Segment.inc_decimal == 4)
+                            {
+                                Segment.pluse = 6;
+                            }
+                            else if(Segment.inc_decimal == 0 && Segment.inc_decimal == 0)
+                            {
+                                 Segment.pluse = 3;
+                            }
+                        }
+                        timer_10s=0;
+                        fivesecond=0;
+                        DataFlash_Erase (0);
+                        DataFlash_Write_NotErase ((unsigned char *)&Segment,0x00000F00, sizeof(Segment));   
+                    }
+                   
+                }
+                if(Flickflg==1)
+                {
+                    disflag=1;
+                    SendByte_74HC595(0x00);
+                    uDS1(1);
+                    uDS2(1);                    
+                }
+                else
+                {   disflag=0;
+                    Display();
+                }  
+            break;            
+        }
+    }   
+}
+
+void Display(void)
+{
+     uDS1(0);
+     uDS2(0);
+    if(++dno >= 2)
+    {
+        dno = 0;
+    }
+    switch(dno)
+    {
+    case 0:
+        SendByte_74HC595(Dec_Count[Segment.inc_decimal]);
+        uDS1(1);
+        break;
+
+    case 1:
+        SendByte_74HC595(digits[Segment.Count_lower]);
+        uDS2(1);
+        break;
+    default:
+        break;
+    }
+}

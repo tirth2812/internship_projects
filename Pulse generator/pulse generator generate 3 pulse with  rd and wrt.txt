@@ -1,0 +1,747 @@
+//====================================================================================
+//                              EMBROIDERY
+//      VERSON  :   VERSON V01
+//      DATE    :   28TH FEB 2015
+//      CARD    :   IW145-STO-DSP
+//      REQ     :
+//
+//====================================================================================
+#include <stdio.h>
+#include "M0518.h"
+#include "REFRENCE_M0518.H"
+#include "struct_def.h"
+#include "gpio.h"
+#include "clocksource.h"
+#include "timer.h"
+#include "AT24C04.h"
+#include "adc.h"
+
+void jqfKeyAction(void);
+void jqfKeyAction1(void);
+void jqfPrint (void);
+void jqfTimeAct(void);
+void LcdInit(void);
+void LcdCdPage ( const uchar * , uchar , uchar );
+void LcdWrtCmd  (uchar);
+void LcdBusyCh  (uint);
+void LcdBcd     (uchar);
+void LcdBcdCh   (uchar);
+void LcdWrtDt   (uchar);
+
+int i;
+uint32_t  Delay = 0x00050000;
+uint8_t TestFlag;
+uint8_t count;
+
+
+typedef enum JcqMenuId
+{
+    JQ_PwrOn ,
+	  JQ_orderforM,
+	  JQ_orderforK, 
+	  JQ_orderforP,
+	  JQ_orderforM1,
+	  JQ_orderforK1,
+   	JQ_orderforP1,
+    JQ_sendorderforM,
+    JQ_setorderforM,
+	  JQ_sendorderforK,
+	  JQ_setorderforK,
+	  JQ_sendorderforP,
+	  JQ_setorderforP
+}JMid;
+
+unsigned short AdcTempCo;
+unsigned int TEST_tI;
+
+extern unsigned char ms1_TimerRefresh;
+
+unsigned char Dij[5], RdSetRPM[5], RdSetRPM1[5], RdSetRPM2[5];
+unsigned long RdRPM;
+unsigned long RdRPM1;
+unsigned long RdRPM2;
+unsigned char TimeSCo;
+unsigned char jchMenu;
+unsigned char jchMenu1;
+unsigned char jflgDspRef;
+unsigned char jflgStart;
+unsigned char jflgStart1;
+unsigned char jflgStart2;
+unsigned char jflgNewRpm;
+unsigned long jshSetRpm;
+unsigned long jshSetRpm1;
+unsigned long jshSetRpm2;
+unsigned char RpmFlg;
+unsigned char jshAddCo;
+unsigned short jloRpmCo;
+unsigned long cal;
+unsigned long cal1;
+unsigned long cal2;
+ULongIntChar Temp;
+
+uchar  Key;
+uchar  Esc;
+uchar  AUp;
+uchar  ADn;
+uchar  Enter;
+
+uchar KeyCh;
+uchar ChEsc;
+uchar ChAUp;
+uchar ChADn;
+uchar ChEnter;
+uchar Filter[3];
+uchar KeyNo;
+uchar KeyOld;
+uchar KeyTemp;
+
+void KeyRead (void)
+{
+//    KeyTemp = P3;
+    KeyTemp = 0;
+    if(KEY1 == 0){KeyTemp |= 0X01;}
+    if(KEY2 == 0){KeyTemp |= 0X02;}
+    if(KEY3 == 0){KeyTemp |= 0X04;}
+    if(KEY4 == 0){KeyTemp |= 0X08;}
+    KeyNo++;
+    if(KeyNo >= 3){KeyNo = 0;}
+    Filter[KeyNo] = KeyTemp;//KEY FILTER
+    Key = ((Filter[0] | Filter[1] | Filter[2])
+        & ((Filter[0] & Filter[1] & Filter[2]) | Key));
+    KeyCh = (Key ^ KeyOld) & Key;
+    KeyOld= Key; 
+    KeyTemp = 0;
+    if(Key & 0x01){Esc  = 1;}else{Esc  = 0;}
+    if(Key & 0x02){AUp  = 1;}else{AUp  = 0;}
+    if(Key & 0x04){ADn  = 1;}else{ADn  = 0;}
+    if(Key & 0x08){Enter= 1;}else{Enter= 0;}
+    if(KeyCh & 0x01){ChEsc  = 1;}else{ChEsc  = 0;}
+    if(KeyCh & 0x02){ChAUp  = 1;}else{ChAUp  = 0;}
+    if(KeyCh & 0x04){ChADn  = 1;}else{ChADn  = 0;}
+    if(KeyCh & 0x08){ChEnter= 1;}else{ChEnter= 0;}
+}
+
+
+void HexToBcdI(void)
+{   Temp.I[I1] = (Temp.I[I1]%10)+  
+        (((Temp.I[I1]%100)/10)*0x10)+  
+        (((Temp.I[I1]%1000)/100)*0x100)+  
+        (((Temp.I[I1]%10000)/1000)*0x1000)+  
+	      (((Temp.I[I1]%100000)/10000)*0x10000);
+}
+
+int main (void)
+{
+ 	  GPIO_Init();
+    while(Delay--); // DELAY  ABOUT 100MSEC DELY AT 22MHZ 
+    GPIO_Init();
+    CLKSRC_Select();// CRYSTAL 12MHZ  CPU WILL RUN FROM PLL AT 48MHZ
+    TIMER_Init();
+    LcdInit();
+    
+    EEP_WP = 0; //EPROM WRITE PROECT DISABLE
+    
+    jflgDspRef = 1;
+    jchMenu = JQ_PwrOn;
+		EE_rd(0x50, RdSetRPM,sizeof(RdSetRPM));
+		RdRPM = RdSetRPM[3]*1000+RdSetRPM[2]*100+RdSetRPM[1]*10+RdSetRPM[0]*1;
+		jshSetRpm = RdRPM;  
+	
+    EE_rd(0x70, RdSetRPM1,sizeof(RdSetRPM1));	
+	  RdRPM1 = RdSetRPM1[3]*1000+RdSetRPM1[2]*100+RdSetRPM1[1]*10+RdSetRPM1[0]*1;
+		jshSetRpm1 = RdRPM1;  
+	
+	  EE_rd(0x90, RdSetRPM2,sizeof(RdSetRPM2));	
+	  RdRPM2 = RdSetRPM2[3]*1000+RdSetRPM2[2]*100+RdSetRPM2[1]*10+RdSetRPM2[0]*1;
+		jshSetRpm2 = RdRPM2; 
+    jflgNewRpm = 1;
+
+
+
+
+    while(1)
+    {
+        if(ms1_TimerRefresh == 1)//1ms
+        {
+            ms1_TimerRefresh = 0;
+            TimeSCo++;
+            if(TimeSCo > 5)
+            {
+                TimeSCo = 0;
+            } 
+            switch(TimeSCo)
+            {
+								case 0:
+                    KeyRead();
+                    break;
+                case 1:
+                    if(Key || KeyCh)
+                     {
+												jflgDspRef = 1;
+												jqfKeyAction();
+                     }
+                
+										break;
+                case 2:
+                    if(jflgDspRef)
+                    {
+                        jflgDspRef = 0;
+                         jqfPrint();
+                    }
+                    break;
+                case 3:
+                    jqfTimeAct();
+                    break;
+                case 4:
+
+                    break;
+            }
+        }
+
+    }
+}
+
+
+
+void jqfKeyAction(void)
+{
+    switch(jchMenu)
+    {
+        case  JQ_PwrOn :
+            break;
+				
+				case  JQ_orderforM :
+				    
+				      if(ChEnter)
+							{
+							    jchMenu = JQ_sendorderforM;
+							}
+						 if( ChADn)
+							{
+								
+							  jchMenu = JQ_orderforP;
+								LcdWrtCmd(0x0C);
+							}						
+				 			break;
+							
+				case  JQ_orderforK :
+				   	
+				      if(ChEnter)
+							{
+							    jchMenu = JQ_sendorderforK;
+							}
+						 if( ChADn)
+							{
+							
+								jchMenu = JQ_orderforM;
+								LcdWrtCmd(0x0C); 
+								
+							}
+						 
+            break;
+							
+							case  JQ_orderforP :
+							    	
+				      if(ChEnter)
+							{
+							    jchMenu = JQ_sendorderforP;
+					    }
+						 if( ChADn)
+							{
+						
+								jchMenu = JQ_orderforK;
+							LcdWrtCmd(0x0C); 
+							}
+						
+            break;
+			 
+       
+        case  JQ_sendorderforM  : 
+					
+					
+							 if( ChEnter)
+            {
+                if(jflgStart == 0) 
+                {
+							
+                    jchMenu = JQ_setorderforM;
+                    jshAddCo = 0;
+                    LcdWrtCmd(0x0F);
+                    Dij[0] = jshSetRpm%10;
+                    Dij[1] = (jshSetRpm/10)%10;
+                    Dij[2] = (jshSetRpm/100)%10;
+                    Dij[3] = (jshSetRpm/1000)%10;
+									  Dij[4] = (jshSetRpm/10000)%10;
+                }
+				    }
+					else	if(ChEsc)
+						      {
+						        jchMenu = JQ_orderforM;	
+									}
+						 
+            else if(ChAUp  ){jflgStart = 1;}
+            else if(ChADn  ){jflgStart = 0;}
+
+             break;
+        case  JQ_setorderforM:
+            if(ChEsc)
+            {
+                jchMenu = JQ_orderforM;
+               
+            }
+             if(ChEnter)
+            {
+                jchMenu = JQ_sendorderforM;
+                jshSetRpm = Dij[4]*10000+Dij[3]*1000+Dij[2]*100+Dij[1]*10+Dij[0]*1;
+                LcdWrtCmd(0x0C);
+                jflgNewRpm = 1;
+								RpmFlg=1;
+								EE_wrt(0x50, Dij, sizeof(Dij));
+							
+							   
+            }
+            else if(ChAUp  )
+            {
+                Dij[jshAddCo]++;
+                if(Dij[jshAddCo] > 9)
+                {
+                    Dij[jshAddCo] = 0;
+                }
+            }
+            else if(ChADn  )
+            {
+                jshAddCo++;
+                if(jshAddCo > 4)
+                {
+                    jshAddCo = 0;
+                }
+            }
+            break;
+						
+					case  JQ_sendorderforK  : 
+					
+					
+						if( ChEnter)
+            {
+                if(jflgStart1 == 0) 
+                {
+							
+                    jchMenu = JQ_setorderforK;
+                    jshAddCo = 0;
+                    LcdWrtCmd(0x0F);
+                    Dij[0] = jshSetRpm1%10;
+                    Dij[1] = (jshSetRpm1/10)%10;
+                    Dij[2] = (jshSetRpm1/100)%10;
+                    Dij[3] = (jshSetRpm1/1000)%10;
+									  Dij[4] = (jshSetRpm1/10000)%10;                                                                                                                    
+                }
+				    }
+						else	if(ChEsc)
+						{
+							jchMenu = JQ_orderforK;	
+						}
+            else if(ChAUp  ){jflgStart1 = 1;}
+            else if(ChADn  ){jflgStart1 = 0;}
+
+             break;
+
+        case  JQ_setorderforK:
+            
+             if(ChEnter)
+            {
+                jchMenu = JQ_sendorderforK;
+                jshSetRpm1 = Dij[4]*10000+Dij[3]*1000+Dij[2]*100+Dij[1]*10+Dij[0]*1;
+                LcdWrtCmd(0x0C);
+                jflgNewRpm = 1;
+								RpmFlg=2;
+								EE_wrt(0x70, Dij, sizeof(Dij));
+            }
+						if(ChEsc)
+            {
+                jchMenu = JQ_orderforK;
+               
+            }
+            else if(ChAUp  )
+            {
+                Dij[jshAddCo]++;
+                if(Dij[jshAddCo] > 9)
+                {
+                    Dij[jshAddCo] = 0;
+                }
+            }
+            else if(ChADn  )
+            {
+                jshAddCo++;
+                if(jshAddCo > 4)
+                {
+                    jshAddCo = 0;
+                }
+            }
+            break;		
+
+
+     case  JQ_sendorderforP  : 
+					
+					
+						if( ChEnter)
+            {
+                if(jflgStart2 == 0) 
+                {
+							
+                    jchMenu = JQ_setorderforP;
+                    jshAddCo = 0;
+                    LcdWrtCmd(0x0F);
+                    Dij[0] = jshSetRpm2%10;
+                    Dij[1] = (jshSetRpm2/10)%10;
+                    Dij[2] = (jshSetRpm2/100)%10;
+                    Dij[3] = (jshSetRpm2/1000)%10;
+									  Dij[4] = (jshSetRpm2/10000)%10;                                                                                                                    
+                }
+				    }
+						else	if(ChEsc)
+						{
+							jchMenu = JQ_orderforP;	
+						}
+            else if(ChAUp  ){jflgStart2 = 1;}
+            else if(ChADn  ){jflgStart2 = 0;}
+
+             break;
+
+        case  JQ_setorderforP:
+            
+             if(ChEnter)
+            {
+                jchMenu = JQ_sendorderforP;
+                jshSetRpm2 = Dij[4]*10000+Dij[3]*1000+Dij[2]*100+Dij[1]*10+Dij[0]*1;
+                LcdWrtCmd(0x0C);
+                jflgNewRpm = 1;
+							RpmFlg=3;
+								EE_wrt(0x90, Dij, sizeof(Dij));
+            }
+						if(ChEsc)
+            {
+                jchMenu = JQ_orderforP;
+               
+            }
+            else if(ChAUp  )
+            {
+                Dij[jshAddCo]++;
+                if(Dij[jshAddCo] > 9)
+                {
+                    Dij[jshAddCo] = 0;
+                }
+            }
+            else if(ChADn  )
+            {
+                jshAddCo++;
+                if(jshAddCo > 4)
+                {
+                    jshAddCo = 0;
+                }
+            }
+            break;												
+    }
+}
+
+void jqfPrint(void)
+{
+    switch(jchMenu)
+    {
+        case  JQ_PwrOn :
+            //        "0123456789ABCDEF"
+            LcdCdPage("    WELCOME             ",16,0x80);
+            LcdCdPage("                  ",16,0xC0);
+            break;
+				case  JQ_orderforM :
+            //        "0123456789ABCDEF"
+            LcdCdPage("  ORDER FOR P                ",16,0x80);
+            LcdCdPage("->ORDER FOR M                   ",16,0xC0);
+            break;
+				
+				case  JQ_orderforK :
+            //        "0123456789ABCDEF"
+            LcdCdPage("  ORDER FOR M              ",16,0x80);
+            LcdCdPage("->ORDER FOR K                  ",16,0xC0);
+            break;
+				
+				
+				case  JQ_orderforP :
+            //        "0123456789ABCDEF"
+            LcdCdPage("  ORDER FOR K             ",16,0x80);
+            LcdCdPage("->ORDER FOR P                   ",16,0xC0);
+            break;
+				
+        case  JQ_sendorderforM:
+            //        "0123456789ABCDEF"
+            LcdCdPage("SEND ORDER FORM:               ",16,0x80);
+            LcdCdPage("                        ",16,0xC0);
+            LcdWrtCmd(0xC8);
+            Temp.I[I1] = jshSetRpm;
+            HexToBcdI();
+			    	LcdBcd(Temp.C[C1]); 
+            LcdBcd(Temp.C[C2]);
+            LcdBcd(Temp.C[C3]);
+            break;
+                       
+        case  JQ_setorderforM:
+            //        "0123456789ABCDEF"
+            LcdCdPage("SET ORDER FORM:           ",16,0x80);
+            LcdCdPage("                          ",16,0xC0);
+            LcdWrtCmd(0xC8);
+            Temp.I[I1] = Dij[4]*10000+Dij[3]*1000+Dij[2]*100+Dij[1]*10+Dij[0]*1;
+            HexToBcdI();     
+		      	LcdBcd(Temp.C[C1]);
+            LcdBcd(Temp.C[C2]);
+            LcdBcd(Temp.C[C3]);
+            if(jshAddCo == 0){LcdWrtCmd(0xCD);}
+            if(jshAddCo == 1){LcdWrtCmd(0xCC);}
+            if(jshAddCo == 2){LcdWrtCmd(0xCB);}
+            if(jshAddCo == 3){LcdWrtCmd(0xCA);}
+            if(jshAddCo == 4){LcdWrtCmd(0xC9);}      
+            break;
+                        
+			     case  JQ_sendorderforK:
+            //        "0123456789ABCDEF"
+            LcdCdPage("SEND ORDER FORK:        ",16,0x80);
+            LcdCdPage("                        ",16,0xC0);
+            LcdWrtCmd(0xC8);
+            Temp.I[I1] = jshSetRpm1;
+            HexToBcdI();
+			    	LcdBcd(Temp.C[C1]); 
+            LcdBcd(Temp.C[C2]);
+            LcdBcd(Temp.C[C3]);
+            break;     
+					 
+					 case  JQ_setorderforK:
+            //        "0123456789ABCDEF"
+            LcdCdPage("SET ORDER FORK:           ",16,0x80);
+            LcdCdPage("                          ",16,0xC0);
+            LcdWrtCmd(0xC8);
+            Temp.I[I1] = Dij[4]*10000+Dij[3]*1000+Dij[2]*100+Dij[1]*10+Dij[0]*1;
+            HexToBcdI();     
+		      	LcdBcd(Temp.C[C1]);
+            LcdBcd(Temp.C[C2]);
+            LcdBcd(Temp.C[C3]);
+            if(jshAddCo == 0){LcdWrtCmd(0xCD);}
+            if(jshAddCo == 1){LcdWrtCmd(0xCC);}
+            if(jshAddCo == 2){LcdWrtCmd(0xCB);}
+            if(jshAddCo == 3){LcdWrtCmd(0xCA);}
+            if(jshAddCo == 4){LcdWrtCmd(0xC9);}      
+            break;
+						
+						case  JQ_sendorderforP:
+            //        "0123456789ABCDEF"
+            LcdCdPage("SEND ORDER FORP:        ",16,0x80);
+            LcdCdPage("                        ",16,0xC0);
+            LcdWrtCmd(0xC8);
+            Temp.I[I1] = jshSetRpm2;
+            HexToBcdI();
+			    	LcdBcd(Temp.C[C1]); 
+            LcdBcd(Temp.C[C2]);
+            LcdBcd(Temp.C[C3]);
+            break;     
+					 
+					 case  JQ_setorderforP:
+            //        "0123456789ABCDEF"
+            LcdCdPage("SET ORDER FORP:           ",16,0x80);
+            LcdCdPage("                          ",16,0xC0);
+            LcdWrtCmd(0xC8);
+            Temp.I[I1] = Dij[4]*10000+Dij[3]*1000+Dij[2]*100+Dij[1]*10+Dij[0]*1;
+            HexToBcdI();     
+		      	LcdBcd(Temp.C[C1]);
+            LcdBcd(Temp.C[C2]);
+            LcdBcd(Temp.C[C3]);
+            if(jshAddCo == 0){LcdWrtCmd(0xCD);}
+            if(jshAddCo == 1){LcdWrtCmd(0xCC);}
+            if(jshAddCo == 2){LcdWrtCmd(0xCB);}
+            if(jshAddCo == 3){LcdWrtCmd(0xCA);}
+            if(jshAddCo == 4){LcdWrtCmd(0xC9);}      
+            break;
+    } 
+//		switch(jchMenu1)
+//    {
+//				case  JQ_orderforM1 :
+//            //        "0123456789ABCDEF"
+//            LcdCdPage("  ORDER FOR M   ",16,0x80);
+//            break;
+//				
+//				case  JQ_orderforK1 :
+//            //        "0123456789ABCDEF"
+//            LcdCdPage("  ORDER FOR K   ",16,0x80);
+//            break;			
+
+//       case  JQ_orderforP1 :
+//            //        "0123456789ABCDEF"
+//            LcdCdPage("  ORDER FOR P                ",16,0x80);
+//            break;				
+//		}
+}
+void jqfTimeAct(void)//5ms
+{
+    static unsigned short TiCo = 0;
+    static unsigned char ToggleFlg = 0;
+    switch(jchMenu)
+    {
+        case  JQ_PwrOn :
+                TiCo++;
+                if(TiCo > 500)
+                {
+                    TiCo = 0;
+                    jchMenu = JQ_orderforM;
+                    jflgDspRef = 1;
+                }
+            break;
+							
+				case   JQ_orderforK:
+            break;
+
+				case   JQ_orderforP:
+            break;
+								
+        case  JQ_sendorderforM:
+            if(jflgStart)
+            {
+                TiCo++;
+                if(TiCo > 20)
+                {
+                    TiCo = 0;
+                    if(ToggleFlg)
+                    {
+                        ToggleFlg = 0;
+                    }
+                    else
+                    {
+                        ToggleFlg = 1;
+                    }
+                    LED1 = ToggleFlg;
+										
+										
+                }
+            }
+            else
+            {
+                LED1 = 1;//led off
+            }
+            break;
+        case  JQ_setorderforM:
+					break;
+				
+				case  JQ_sendorderforK:
+            if(jflgStart1)
+            {
+                TiCo++;
+                if(TiCo > 20)
+                {
+                    TiCo = 0;
+                    if(ToggleFlg)
+                    {
+                        ToggleFlg = 0;
+                    }
+                    else
+                    {
+                        ToggleFlg = 1;
+                    }
+                    LED2 = ToggleFlg;
+										
+										
+                }
+            }
+            else
+            {
+                LED2 = 1;//led off
+            }
+            break;
+						
+				  case  JQ_setorderforK:
+					break;
+					
+					case  JQ_sendorderforP:
+            if(jflgStart2)
+            {
+                TiCo++;
+                if(TiCo > 20)
+                {
+                    TiCo = 0;
+                    if(ToggleFlg)
+                    {
+                        ToggleFlg = 0;
+                    }
+                    else
+                    {
+                        ToggleFlg = 1;
+                    }
+                    LED3 = ToggleFlg;
+										
+										
+                }
+            }
+            else
+            {
+                LED3 = 1;//led off
+            }
+            break;
+						
+				  case  JQ_setorderforP:
+					break;
+				
+    }
+}
+
+unsigned char jflgPu1;
+void TMR1_IRQHandler(void)
+{
+    MYTISR1  = 1; //WILL CLEAR PREVIOUS INT STATUS
+
+    if(jflgNewRpm)
+    {
+        jflgNewRpm = 0;
+				if(RpmFlg==1)
+				{
+					if(jshSetRpm != 0)
+					{
+							MYTCMPR1 = 60000000/(2*jshSetRpm);
+					}
+				}
+				else if(RpmFlg==2)
+				{
+					if(jshSetRpm1 != 0)
+					{
+							MYTCMPR1 = 60000000/(2*jshSetRpm1);
+					}
+				}
+				else if(RpmFlg==3)
+				{
+					if(jshSetRpm2 != 0)
+					{
+							MYTCMPR1 = 60000000/(2*jshSetRpm2);
+					}
+				}
+    }
+    if((jflgStart)||(jflgStart1)||(jflgStart2))
+    {
+        jflgPu1++;
+        if(jflgPu1 > 1)
+        {
+            jflgPu1 = 0;
+        }
+        switch(jflgPu1)
+        {
+            case 0:     //45
+             
+              OP3   = 1;
+              OP4   = 0;
+              
+              break;
+						
+						   case 1:     //90
+            
+              OP3   = 0;
+              OP4   = 1;
+             
+              break;
+        }
+    }
+		
+
+}
+
