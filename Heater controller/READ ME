@@ -1,1 +1,9 @@
+heater controller system designed to automatically manage a heater or boiler. Users could set a temperature range, and the device would turn the heater on or off based on these thresholds. It continuously monitored the temperature at user-defined intervals to maintain the desired range. Additionally, users could set a timer for the heater and view or adjust the set values by pressing a switch. This project involved programming microcontrollers, integrating temperature sensors, and designing a user-friendly interface, which enhanced my skills in embedded systems and hardware integration.
+
+
+
+
+
+
+
 
